@@ -1,6 +1,6 @@
 project:
   type: website
-
+  output-dir: docs
 website:
   page-footer:
     left: "Made with [Quarto](https://quarto.org) by [PaulaLC](https://twitter.com/paulalcasado) 2022"

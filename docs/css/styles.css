@@ -1,0 +1,14 @@
+/* css styles */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+h1 {
+    font-family: "Bebas Neue";
+}
+
+.navbar-dark {
+  background-color: black;
+}
+
+.navbar-title {
+  font-family: "Bebas Neue";
+}

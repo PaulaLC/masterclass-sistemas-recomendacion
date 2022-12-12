@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "",
+    "text": "Bienvenid@ a esta masterclass sobre Sistemas de Recomendación.\nTras esta clase aprenderás…\n\nQué es un Sistema de Recomendación y cómo funciona\nQué tipos de Sistemas de Recomendación existen\nEn qué consiste el Filtro Colaborativo y los métodos basados en contenido\nCómo funciona Netflix\nCómo construir un sistema de recomendación en R, desde el algoritmo hasta la app en Shiny!"
+  },
+  {
+    "objectID": "index.html#para-esta-clase-necesitarás",
+    "href": "index.html#para-esta-clase-necesitarás",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Para esta clase necesitarás…",
+    "text": "Para esta clase necesitarás…\n\nInstalar algunas librerías de R, como tidyverse, shiny o recommenderlab.\n\n\npkg_list <- c(\n  \"tidyverse\", \"shiny\", \"recommenderlab\", \"reactable\", \"rmarkdown\", \"glue\", \"bslib\"\n  )\ninstall.packages(pkg_list)\n\n\nLa última versión de R (R 3.3.0+) y RStudio(2022.07.2+576). Sigue los pasos aquí"
+  },
+  {
+    "objectID": "index.html#programación",
+    "href": "index.html#programación",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Programación",
+    "text": "Programación\n\nParte 1 - Introducción a los Sistemas de Recomendación\nParte 2 - {recommenderlab}, la librería de R de Algoritmos de Recomendación\nParte 3 - Construyendo Netflix en R con Shiny"
+  },
+  {
+    "objectID": "index.html#instructora",
+    "href": "index.html#instructora",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Instructora",
+    "text": "Instructora\nPaula es científica de datos en el sector tecnológico, experta en visualización de datos y R.\nGraduada en Estadística, comenzó su carrera profesional en Telefónica, diseñando sistemas de recomendación basados en Reinforcement Learning.\nEn la universidad, ha colaborado como investigadora en el departamento de Estadística e Investigación Operativa de la UVa y ha impartido clases sobre ciencia de datos en varias universidades.\nEs autora de El arte del dato bien contado, un blog de visualización de datos y cuenta con diversas charlas y cursos sobre ciencia de datos, visualización, estadística y R.\n\n This work is licensed under a Creative Commons Attribution 4.0 International License."
+  }
+]
