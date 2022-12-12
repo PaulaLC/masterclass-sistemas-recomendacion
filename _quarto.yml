@@ -1,0 +1,47 @@
+project:
+  type: website
+
+website:
+  page-footer:
+    left: "Made with [Quarto](https://quarto.org) by [PaulaLC](https://twitter.com/paulalcasado) 2022"
+  navbar:
+    background: "#447099"
+    left:
+      - href: index.qmd
+        text: Home
+      - href: material/parte1-sistemas_de_recomendacion.qmd
+        text: "Parte 1"
+      - href: material/parte2-recommenderlab.qmd
+        text: "Parte 2"
+      - href: material/parte3-shiny_app.qmd
+        text: "Parte 3"
+    right: 
+      - href: "https://elartedeldato.com/"
+        text: El arte del dato bien contado
+      - icon: github
+        href:  https://github.com/elartedeldato
+      - icon: twitter
+        href: https://twitter.com/elartedeldato
+  sidebar:
+    logo: img/logo_elarte.png
+    style: docked
+    contents: 
+      - section: "Masterclass"
+        contents: 
+        - href: material/parte1-sistemas_de_recomendacion.qmd
+          text: "Parte 1 - Teoría"
+        - href: material/parte2-recommenderlab.qmd
+          text: "Parte 2 - recommenderlab"
+        - href: material/parte3-shiny_app.qmd
+          text: "Parte 3 - App"
+
+
+format:
+  html:
+    theme: cosmo
+    css: css/styles.css
+    toc: true
+    include-in-header:
+      - target.html
+
+

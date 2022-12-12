@@ -1,0 +1,55 @@
+---
+title: "Masterclass - Introducción a los Sistemas de Recomendación"
+author: "Paula López Casado"
+format: html
+---
+
+## Bienvenid@!
+
+Bienvenid@ a esta masterclass sobre Sistemas de Recomendación. 
+
+Tras esta clase aprenderás...
+
+- Qué es un Sistema de Recomendación y cómo funciona
+- Qué tipos de Sistemas de Recomendación existen
+- En qué consiste el Filtro Colaborativo y los métodos basados en contenido
+- Cómo funciona Netflix
+- Cómo construir un sistema de recomendación en R, desde el algoritmo hasta la [app en Shiny](https://paulalcasado.shinyapps.io/Netflix/)!
+
+![](material/img/shiny.png)
+
+## Para esta clase necesitarás...
+
+- Instalar algunas librerías de R, como tidyverse, shiny o recommenderlab.
+
+```{r pkg-list}
+#| eval: false
+pkg_list <- c(
+  "tidyverse", "shiny", "recommenderlab", "reactable", "rmarkdown", "glue", "bslib"
+  )
+install.packages(pkg_list)
+```
+
+- La última versión de R (R 3.3.0+) y RStudio(2022.07.2+576). 
+[Sigue los pasos aquí](https://posit.co/download/rstudio-desktop/)
+
+
+## Programación
+
+- [Parte 1 - Introducción a los Sistemas de Recomendación](material/parte1-sistemas_de_recomendacion.qmd)
+- [Parte 2 - {recommenderlab}, la librería de R de Algoritmos de Recomendación](material/parte2-recommenderlab.qmd)
+- [Parte 3 - Construyendo Netflix en R con Shiny](material/parte3-shiny_app.qmd)                    
+
+## Instructora
+
+Paula es científica de datos en el sector tecnológico, experta en visualización de datos y R. 
+
+Graduada en Estadística, comenzó su carrera profesional en Telefónica, diseñando sistemas de recomendación basados en Reinforcement Learning. 
+
+En la universidad, ha colaborado como investigadora en el departamento de Estadística e Investigación Operativa de la UVa y ha impartido clases sobre ciencia de datos en varias universidades. 
+
+Es autora de El arte del dato bien contado, un blog de visualización de datos y cuenta con diversas charlas y cursos sobre ciencia de datos, visualización, estadística y R.
+
+------------------------------------------------------------------------
+
+![](https://i.creativecommons.org/l/by/4.0/88x31.png) This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).

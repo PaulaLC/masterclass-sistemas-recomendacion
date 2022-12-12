@@ -1,0 +1,744 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "",
+    "text": "Bienvenid@ a esta masterclass sobre Sistemas de Recomendación.\nTras esta clase aprenderás…\n\nQué es un Sistema de Recomendación y cómo funciona\nQué tipos de Sistemas de Recomendación existen\nEn qué consiste el Filtro Colaborativo y los métodos basados en contenido\nCómo funciona Netflix\nCómo construir un sistema de recomendación en R, desde el algoritmo hasta la app en Shiny!"
+  },
+  {
+    "objectID": "index.html#para-esta-clase-necesitarás",
+    "href": "index.html#para-esta-clase-necesitarás",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Para esta clase necesitarás…",
+    "text": "Para esta clase necesitarás…\n\nInstalar algunas librerías de R, como tidyverse, shiny o recommenderlab.\n\n\npkg_list <- c(\n  \"tidyverse\", \"shiny\", \"recommenderlab\", \"reactable\", \"rmarkdown\", \"glue\", \"bslib\"\n  )\ninstall.packages(pkg_list)\n\n\nLa última versión de R (R 3.3.0+) y RStudio(2022.07.2+576). Sigue los pasos aquí"
+  },
+  {
+    "objectID": "index.html#instructor",
+    "href": "index.html#instructor",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Instructor",
+    "text": "Instructor\nPaula es científica de datos en el sector tecnológico, experta en visualización de datos y R. Graduada en Estadística, comenzó su carrera profesional en Telefónica, diseñando sistemas de recomendación basados en Reinforcement Learning. En la universidad, ha colaborado como investigadora en el departamento de Estadística e Investigación Operativa de la UVa y ha impartido clases sobre ciencia de datos en varias universidades. Es autora de El arte del dato bien contado, un blog de visualización de datos y cuenta con diversas charlas y cursos sobre ciencia de datos, visualización, estadística y R.\n\n This work is licensed under a Creative Commons Attribution 4.0 International License."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#en-esta-sessión-veremos",
+    "href": "material/parte3-shiny_app.html#en-esta-sessión-veremos",
+    "title": "",
+    "section": "En esta sessión veremos…",
+    "text": "En esta sessión veremos…\nCómo construir una app como de recomendación en R!\n Esta app consta de varias filas con películas recomendadas. Cada fila está generada por las recomendaciones de un algoritmo dierente. Los algoritmos que utilizaremos son: UBCF, IBCF, POPULAR y RANDOM. Además, la app incluye un texto con la valoración estimada personalizada para cada usuario."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#sobre-shiny",
+    "href": "material/parte3-shiny_app.html#sobre-shiny",
+    "title": "",
+    "section": "Sobre Shiny",
+    "text": "Sobre Shiny\nShiny es una librería de R que permite crear aplicaciones web interactivas.\nSi nunca has utilizado shiny antes, puedes empezar por este tutorial de introducción."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#crear-el-achivo-app.r",
+    "href": "material/parte3-shiny_app.html#crear-el-achivo-app.r",
+    "title": "",
+    "section": "Crear el achivo app.R",
+    "text": "Crear el achivo app.R\nEn primer lugar, generamos un script de R con el nombre app.R con las funciones principales ui y server.\n\nlibrary(shiny)\n\nui <- shiny::fluidPage(\n  \n)\n\nserver <- function(input, output, session) {\n  \n}\n\nshinyApp(ui, server)\n\n\nui será la función que defina la interfaz de usuario.\nserver quedará vacío ya que en este caso no vamos a interactuar con la app :("
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#añade-las-librerías-necesarias",
+    "href": "material/parte3-shiny_app.html#añade-las-librerías-necesarias",
+    "title": "",
+    "section": "Añade las librerías necesarias",
+    "text": "Añade las librerías necesarias\nAdemás de shiny, también necesitarás otras librerías. Cárgalas al principio del script app.R.\n\n# Librerías\nlibrary(glue) # Permite pegar strings\nlibrary(bslib) # Sirve para algunas componentes de diseño\nlibrary(recommenderlab) # Librería de recomendación\nlibrary(dplyr) # Manipulación de datos\n\nui <- shiny::fluidPage(\n  \n)\n\nserver <- function(input, output, session) {\n  \n}\n\nshinyApp(ui, server)"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#utils_cards.r",
+    "href": "material/parte3-shiny_app.html#utils_cards.r",
+    "title": "",
+    "section": "utils_cards.R",
+    "text": "utils_cards.R\nEn un nuevo script, escribiremos las funciones que nos permiten crear las cards o tarjetas de cada película.\nEste script se llamará utils_cards.R y lo guardaremos en una carpeta aparte con el resto de scripts de R.\nOjo! Todos menos el principal, app.R\nPor el momento, contendrá una función llamada bs_card()."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#section",
+    "href": "material/parte3-shiny_app.html#section",
+    "title": "",
+    "section": "",
+    "text": "bs_card <- function(titulo, img, norm_rating) {\n  shiny::div(\n    class=\"card mb-3 col-sm-4\",\n    shiny::img(src = img,\n               class = \"card-img-top\"),\n    shiny::div(\n      class=\"card-body\",\n      shiny::h5(\n        class=\"card-title\", \n        titulo\n      ),\n      shiny::p(\n        class=\"card-text\", \n        glue::glue(norm_rating, \"% recomendado para ti\")\n      ),\n      shiny::a(\n        href = \"\", \n        class = \"btn btn-primary\", \n        \"Ver película\"\n        )\n    )\n    )\n}"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#construyendo-la-interfaz-de-usuario-o-ui",
+    "href": "material/parte3-shiny_app.html#construyendo-la-interfaz-de-usuario-o-ui",
+    "title": "",
+    "section": "Construyendo la Interfaz de Usuario o UI",
+    "text": "Construyendo la Interfaz de Usuario o UI\nPara construir la interfaz de usuario, necesitamos:\n\nCrear un archivo custom.css\nDefinir el tema con bslib basado en Boostrap 5\nGenerar la barra de navegación principal con navbarPage\nGenerar las filas de cards que contendrán las películas recomendadas basadas en 4 algoritmos diferentes"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#ui",
+    "href": "material/parte3-shiny_app.html#ui",
+    "title": "",
+    "section": "ui()",
+    "text": "ui()\n\nui <- shiny::fluidPage(\n  \n  includeCSS(\"custom.css\"),\n  \n  theme = bslib::bs_theme(\n    version = 5, # Boostrap 5\n    bg = \"#000000\", # Background oscuro\n    fg = \"#FFFFFF\",\n    primary = \"#e50914\", # Rojo de Netflix como color principal\n    base_font = \"'Helvetica Neue', 'Segoe UI', Roboto, Ubuntu, sans-serif\" # Fuente de Netflix\n    ), \n  \n  navbarPage(\"NETFLIX\",\n             tabPanel(\"Home\"),\n             tabPanel(\"Series\"),\n             tabPanel(\"Películas\")\n  ),\n  \n  shiny::div(class=\"container px-4 px-lg-5\",\n    shiny::h2(\"Porque a otros como tú le han gustado\"),\n    shiny::div(class=\"container-fluid py-2 overflow-scroll\",\n      shiny::div(class=\"d-flex flex-row flex-nowrap\", \n        generar_reco_cards(df_ubcf)\n      )\n    )\n  ),\n  \n  shiny::div(class=\"container px-4 px-lg-5\",\n    shiny::h2(\"Porque has visto películas parecidas\"),\n    shiny::div(class=\"container-fluid py-2 overflow-scroll\",\n      shiny::div(class=\"d-flex flex-row flex-nowrap\", \n        generar_reco_cards(df_ibcf)\n      )\n    )\n  ),\n  \n  shiny::div(class=\"container px-4 px-lg-5\",\n    shiny::h2(\"Las películas más populares\"),\n    shiny::div(class=\"container-fluid py-2 overflow-scroll\",\n      shiny::div(class=\"d-flex flex-row flex-nowrap\", \n        generar_reco_cards(df_popular)\n      )\n   )\n  ),\n  \n  shiny::div(class=\"container px-4 px-lg-5\",\n    shiny::h2(\"Descubre otras películas\"),\n    shiny::div(class=\"container-fluid py-2 overflow-scroll\",\n      shiny::div(class=\"d-flex flex-row flex-nowrap\", \n        generar_reco_cards(df_random)\n        )\n    )\n  )\n)"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#función-para-generar-las-listas-de-recomendación",
+    "href": "material/parte3-shiny_app.html#función-para-generar-las-listas-de-recomendación",
+    "title": "",
+    "section": "Función para generar las listas de Recomendación",
+    "text": "Función para generar las listas de Recomendación\nAñadir la función generar_reco_cards() a utils.R\n\ngenerar_reco_cards <- function(df_reco, df_peliculas) {\n\n  reco_cards <- htmltools::tagList() # generamos lista vacía de tags de HTML\n  \n  for (i in 1:10){\n    reco_cards[[i]] <- bs_card(titulo = df_reco$item[i], \n                               img = df_peliculas[df_peliculas$titulo == df_reco$item[i], \"img_url\"],\n                               norm_rating = df_reco$norm_rating[i])\n  }\n  return(reco_cards)\n}\n\n\nCarga al principio de la app el script de funciones con source(\"R/utils.R\")."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#custom.css",
+    "href": "material/parte3-shiny_app.html#custom.css",
+    "title": "",
+    "section": "custom.css",
+    "text": "custom.css\nCrearemos un nuevo archivo custom.css que contendrá algunos elementos de estilo de la app que imitan a la app original de Netflix.\n\n@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');\n\n.card {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  min-width: 100px;\n  word-wrap: break-word;\n  border: 0;\n  border-radius: 0rem;\n  overflow: hidden;\n  box-shadow: 2px 4px 12px rgba(0,0,0,.08);\n  transition: all .3s cubic-bezier(0,0,.5,1);\n\n}\n\n.card:hover {\n  transform: scale(1.1);\n}\n\n.card-img, .card-img-top, .card-img-bottom {\n    width: 70%;\n    object-fit: cover;\n}\n\n.card p {\n  color: #58c24f;\n  font-weight: bold;\n}\n\n.navbar.navbar-default {\n  background-color: transparent !important;\n}\n\n.navbar.navbar-default .navbar-brand {\n  color: #e50914;\n  font-weight: 500;\n  font-family: \"Bebas Neue\";\n  letter-spacing: 2px;\n  font-size: 40px;\n}\n\n.navbar-light .navbar-nav .nav-link, .navbar-light .navbar-nav .nav-tabs>li>a, .navbar-light .navbar-nav .nav-pills>li>a, .navbar.navbar-default .navbar-nav .nav-link, .navbar.navbar-default .navbar-nav .nav-tabs>li>a, .navbar.navbar-default .navbar-nav .nav-pills>li>a, .navbar-light ul.nav.navbar-nav>li>a, .navbar.navbar-default ul.nav.navbar-nav>li>a {\n  color: #fff;\n  font-family: \"Helvetica Neue\";\n}"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#crear-las-funciones-de-recomendación",
+    "href": "material/parte3-shiny_app.html#crear-las-funciones-de-recomendación",
+    "title": "",
+    "section": "Crear las funciones de recomendación",
+    "text": "Crear las funciones de recomendación\nEn utils.R generaremos las funciones recomendar_pelicula() y normalizar_rating().\n\nrecomendar_pelicula <- function(train_data, user_data, algoritmo, params, excluir) {\n  Recommender(train_data, algoritmo, params) %>% # Generar modelo\n    predict(user_data, type = \"ratings\") %>%  # Recomendar al usuario\n    as(\"data.frame\") %>% # Convertir la matriz a dataframe\n    arrange(desc(rating)) %>% # Ordenar de forma descendente por rating\n    filter(!item %in% excluir) %>% # Excluir películas ya recomendadas\n    head(10) %>% # Filtrar el top 10 de películas\n    mutate(norm_rating = round(normalizar_rating(rating),0)) # Normalizar ratings\n}\n\nnormalizar_rating <- function(rating) {\n  norm_rating <- (rating - 1) / 4 * 100\n  ifelse(norm_rating > 100, 100, norm_rating)\n}"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#generar-las-listas-de-recomendación",
+    "href": "material/parte3-shiny_app.html#generar-las-listas-de-recomendación",
+    "title": "",
+    "section": "Generar las listas de recomendación",
+    "text": "Generar las listas de recomendación\nEn el archivo principal app.R generaremos las listas de recomendación para cada modelo a partir de los datos de entrada MovieLense.\nCada lista será un dataframe de R con las columnas user, item, rating y norm_rating."
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#section-1",
+    "href": "material/parte3-shiny_app.html#section-1",
+    "title": "",
+    "section": "",
+    "text": "# Datos\ndata(\"MovieLense\")\nMovieLenseSmall <- MovieLense[1:100, colCounts(MovieLense) > 250]\ndf_peliculas <- read.csv(\"peliculas.csv\") # csv con los títulos y url de las caráctulas de las películas\ntrain_data <- MovieLenseSmall[1:75, ]\nuser_data <- MovieLenseSmall[76]\n\n# Dataframes de reocmendación\ndf_ubcf <- recomendar_pelicula(train_data, user_data, \"UBCF\", list(nn = 3), NULL)\ndf_ibcf <- recomendar_pelicula(train_data, user_data, \"IBCF\", list(k = 100), \n                               df_ubcf$item)\ndf_popular <- recomendar_pelicula(train_data, user_data, \"POPULAR\", NULL, \n                                  c(df_ubcf$item, df_ibcf$item))\ndf_random <- recomendar_pelicula(train_data, user_data, \"RANDOM\",  NULL, \n                                 c(df_ubcf$item, df_ibcf$item, df_popular$item))"
+  },
+  {
+    "objectID": "material/parte3-shiny_app.html#section-2",
+    "href": "material/parte3-shiny_app.html#section-2",
+    "title": "",
+    "section": "",
+    "text": "https://elartedeldato.com"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#en-esta-sessión-veremos",
+    "href": "material/parte1-sistemas_de_recomendacion.html#en-esta-sessión-veremos",
+    "title": "",
+    "section": "En esta sessión veremos…",
+    "text": "En esta sessión veremos…\n\nQué es un Sistema de Recomendación\nDónde se aplican\nVentajas de los Sistemas de Recomendación\nTipos de Sistemas de Recomendación\nFiltro Colaborativo - Basado en Usuario Vs. en Items\nEvaluación de algoritmos\nMétodos basados en contenido"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#qué-es-un-sistema-de-recomendación",
+    "href": "material/parte1-sistemas_de_recomendacion.html#qué-es-un-sistema-de-recomendación",
+    "title": "",
+    "section": "Qué es un Sistema de Recomendación",
+    "text": "Qué es un Sistema de Recomendación\nLos sistemas de recomendación son algoritmos que permiten sugerir ítems a usuarios de forma personalizada, basándose en datos históricos o features de los usuarios e ítems."
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#dónde-se-aplican",
+    "href": "material/parte1-sistemas_de_recomendacion.html#dónde-se-aplican",
+    "title": "",
+    "section": "Dónde se aplican",
+    "text": "Dónde se aplican\nEn los últimos años, están presentes en la mayor parte de plataformas de entretenimiento así como comercios online y otros servicios web.\n\nAmazon utiliza sistemas recomendación para vender artículos que puedan interesar a los comparadores\nGoogle con Youtube, recomienda vídeos en función de las visualizaciones de los usuarios\nSpotify para la recomendación y exploración de canciones y lista de reproducción que puedan interesar a los oyentes"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ventajas-de-los-sistemas-de-recomendación",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ventajas-de-los-sistemas-de-recomendación",
+    "title": "",
+    "section": "Ventajas de los Sistemas de Recomendación",
+    "text": "Ventajas de los Sistemas de Recomendación\n\nPermite destacar frente a competidores\nProvocan que el usuario permanezca más tiempo en la plataforma\nDiversificar las ventas de productos poco usuales mediante exploración de productos\nComprender las preferencias del usuario"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#the-netflix-prize",
+    "href": "material/parte1-sistemas_de_recomendacion.html#the-netflix-prize",
+    "title": "",
+    "section": "The Netflix Prize",
+    "text": "The Netflix Prize\nEn 2006, Netflix organizó un concurso abierto para el mejor algoritmo de filtrado colaborativo para predecir las valoraciones de los usuarios de las películas, basándose en las valoraciones anteriores sin ninguna otra información sobre los usuarios o las películas.\n\n100.480.507 calificaciones de 1 a 5 estrellas\n480.189 usuarios\n17.770 películas\nEl premio: 1.000.000 $\n\n\nHoy en día cuenta con 220 millones de usuarios"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#conceptos-básicos",
+    "href": "material/parte1-sistemas_de_recomendacion.html#conceptos-básicos",
+    "title": "",
+    "section": "Conceptos básicos",
+    "text": "Conceptos básicos\nEn los sistemas de recomendación se utiliza una nomenclatura común:\n\nUsuario: Individuo que provee valoraciones sobre ítems y al que posteriormente se le recomienda\nÍtem, producto: Objecto a recomendar al usuario\nRating: Valoración o preferencia del ítem a recomendar. Por ejemplo, calificación de 1 a 5 de menor a mayor preferencia.\nCatálogo de productos: Listado de productos o ítems disponibles a recomendar."
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#tipos-de-sistemas-de-recomendación",
+    "href": "material/parte1-sistemas_de_recomendacion.html#tipos-de-sistemas-de-recomendación",
+    "title": "",
+    "section": "Tipos de sistemas de recomendación",
+    "text": "Tipos de sistemas de recomendación\n {fig-align=“center”;}"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-1",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-1",
+    "title": "",
+    "section": "Filtro colaborativo",
+    "text": "Filtro colaborativo\n\nSe basa en interacciones pasadas entre usuarios e ítems para producir nuevas recomendaciones\nLas iteracciones se almacenan en las matrices de interacción usuario-ítem\nSupone que interacciones pasadas son suficientes para detectar usuarios o ítems similares"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#problema-del-arranque-en-frío-o-cold-start",
+    "href": "material/parte1-sistemas_de_recomendacion.html#problema-del-arranque-en-frío-o-cold-start",
+    "title": "",
+    "section": "Problema del arranque en frío o cold-start",
+    "text": "Problema del arranque en frío o cold-start\n\nNo es posible recomendar sin interacciones previas entre usario-ítem\nSoluciones comunes:\n\nRecomendación aleatoria\nRecomendación de ítems más populares\nRecomendación de un set de varios ítems a nuevos usuarios o un nuevo ítem a varios usuarios"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---categorías",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---categorías",
+    "title": "",
+    "section": "Filtro colaborativo - Categorías",
+    "text": "Filtro colaborativo - Categorías\n\nBasados en memoria\n\nNo asumen ningún modelo, basándose exclusivamente en las interacciones almacenadas entre usuario-ítem\nBuscar los vecinos más cercanos, entre usuarios o entre ítems\n\nBasados en modelo\n\nSuponen un modelo subyacente generativo que explicaría las interacciones entre usuario-ítem\nEl modelo genera variables latentes para describir las interacciones usuario-ítem"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-i",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-i",
+    "title": "",
+    "section": "Filtro colaborativo - Matemáticas I",
+    "text": "Filtro colaborativo - Matemáticas I\n\nSea \\(U = \\{u_1, u_2, ..., u_m\\}\\) un conjunto de usuarios\n\\(I = \\{i_1, i_2, ..., i_n\\}\\) un conjunto de ítems\nlos ratings se almacenan en una matriz de usuario-ítem \\(m \\times n\\), \\(R(r_{jl})\\)\nCada fila de \\(R(r_{jl})\\) representa un usuario \\(u_j\\) con \\(1 \\leq j \\leq m\\)\nCada columna representa el ítem \\(i_l\\) con \\(1 \\leq l \\leq n\\)\nUtilizamos \\(r_j\\) para denotar el vector de filas de \\(R\\) con los ratings de los usuarios \\(u_j\\)"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-ii",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-ii",
+    "title": "",
+    "section": "Filtro colaborativo - Matemáticas II",
+    "text": "Filtro colaborativo - Matemáticas II\n\nLos ratings, tendrían una escala específica. Por ejemplo, Amazon utilza una escala de 1 a 5 para valorar los productos de su plataforma y cada rating estimado puede tomar valor dentro del intervalo \\([1, 5]\\)\nGeneralmente, solo una pequeña fracción de ratings es conocida, y para la mayor parte de los elementos de la matriz \\(R\\) serán valores missing o desconocidos\nDichos valores representan productos que el usuario no a valorado todavía y que, probablemente, no haya visto hasta el momento"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-iii",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-iii",
+    "title": "",
+    "section": "Filtro colaborativo - Matemáticas III",
+    "text": "Filtro colaborativo - Matemáticas III\n\nEl objetivo es crear recomendaciones para un usuario llamado usuario activo \\(u_a \\in U\\)\nDefinimos el conjunto de elementos desconocidos para el usuario \\(u_a\\) como \\(I_a=I \\setminus \\{i_l \\in I | r_{al} > 0\\}\\)\nLas dos tareas típicas son:\n\nPredecir las valoraciones de todos los elementos de \\(I_a\\)\nCrear una lista que contenga los \\(N\\) mejores elementos recomendados de \\(I_a\\) (es decir, una lista de recomendaciones top-N) para \\(u_a\\)"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-iv",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-iv",
+    "title": "",
+    "section": "Filtro colaborativo - Matemáticas IV",
+    "text": "Filtro colaborativo - Matemáticas IV\n\nLos sistemas de recomendación están relacionados con el problema de completar la matriz\nLa creación de una lista top-N puede considerarse como un segundo paso después de predecir las valoraciones de todos los artículos desconocidos en \\(I_a\\) y, a continuación, tomar los \\(N\\) artículos con las valoraciones más altas predichas\nAlgunos algoritmos omiten la predicción de las valoraciones en primer lugar y son capaces de encontrar directamente los \\(N\\) mejores artículos"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-v",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo---matemáticas-v",
+    "title": "",
+    "section": "Filtro colaborativo - Matemáticas V",
+    "text": "Filtro colaborativo - Matemáticas V\n\nUna lista de las \\(N\\) mejores recomendaciones para un usuario \\(u_a\\) es un conjunto parcialmente ordenado \\(T_N = (X,\\geq)\\), donde \\(X \\subset I_a\\) y \\(|X| \\leq N\\) (\\(|.|\\) denota la cardinalidad del conjunto)\nNótese que pueden existir casos en los que las listas top-N contengan menos de N elementos. Esto puede ocurrir si \\(|I_a| < N\\) o si el algoritmo es incapaz de identificar \\(N\\) elementos a recomendar"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#problema-de-la-dispersión",
+    "href": "material/parte1-sistemas_de_recomendacion.html#problema-de-la-dispersión",
+    "title": "",
+    "section": "Problema de la dispersión",
+    "text": "Problema de la dispersión\n\nEn las matrices de interacción existe un gran número de elementos con valoraciones desconocidas\nEsto hace que predecir los valores de las valoraciones desconocidas sea computacionalmente costoso\nAlgunos enfoques, por ejemplo los enfoques basados en reglas, pueden predecir la lista top-N directamente sin considerar primero todos los elementos desconocidos"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-basado-en-el-usuario-ubcf-1",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-basado-en-el-usuario-ubcf-1",
+    "title": "",
+    "section": "Filtro Colaborativo Basado en el Usuario (UBCF)",
+    "text": "Filtro Colaborativo Basado en el Usuario (UBCF)\n\nAlgoritmo basado en memoria que asume que usuarios con preferencias similares valorarán elementos de forma similar\nConsiste en encontrar el vecino más cercano entre los usuarios con valoraciones ya conocidas y agregar dichas valoraciones para generar una predicción\nEl conjunto de vecinos más cercanos se define en términos de similitud entre usuarios\n\nBien tomando un número determinado de usuarios más similares (k vecinos más cercanos)\nO bien todos los usuarios dentro de un umbral de similitud determinado"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ubcf",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ubcf",
+    "title": "",
+    "section": "UBCF",
+    "text": "UBCF"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ubcf---medidas-de-similitud",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ubcf---medidas-de-similitud",
+    "title": "",
+    "section": "UBCF - Medidas de similitud",
+    "text": "UBCF - Medidas de similitud\n\nCoeficiente de correlación de Pearson\n\n\\[m_{pearson}(x,y) = \\frac{1}{n-1} \\sum_{l=1}^{n} (\\frac{x_l - \\bar{x}}{s_x})(\\frac{y_l - \\bar{y}}{s_y})\\]\n\nSimilitud del coseno\n\n\\[m_{coseno}(x,y) = \\frac{x . y}{||x|| ||y||}\\]\n\ndonde \\(n\\) es el número de elementos de los vectores de valoración\n\\(x\\) e \\(y\\) los vectores fila de dos usuarios de la matrix \\(R\\)\n\\(s_x\\) y \\(s_y\\) es la desviación estándar\n\\(||.||\\) es la norma \\(l^2\\) de un vector"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ubcf---calcular-la-valoración-desconocida",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ubcf---calcular-la-valoración-desconocida",
+    "title": "",
+    "section": "UBCF - Calcular la valoración desconocida",
+    "text": "UBCF - Calcular la valoración desconocida\n\nUna vez encontrados los usuarios en el conjunto de vecinos, sus valoraciones se agregan para formar la valoración prevista para el usuario activo \\(u_a\\)\nLa forma más sencilla es hacer una media de las valoraciones en el conjunto de vecinos\nPara el elemento \\(i_l\\) esto es\n\n\\[\\hat{r}_{al} = \\frac{1}{|N(a)|} \\sum_{i \\in N(a)}{r_{il}}\\]"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ubcf---normalización",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ubcf---normalización",
+    "title": "",
+    "section": "UBCF - Normalización",
+    "text": "UBCF - Normalización\n\nAlgunos usuarios tienden a valorar positivamente cualquier elemento frente a otros que utilizan valoraciones más bajas, por tanto se debe normalizar los datos\nEl método más popular de normalización consiste en centrar las filas de la matriz de valoración usuario-ítem mediante \\(h(r_{jl}) = r_{jl} - \\bar{r}_{j}\\), donde \\(\\bar{r}_{j}\\) es la media de todas las valoraciones disponibles en la fila \\(j\\) de la matriz \\(R\\).\nPara obtener la valoración en la escala original basta con aplicar la inversa de la función de normalización"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-basado-en-los-ítems-ibcf-1",
+    "href": "material/parte1-sistemas_de_recomendacion.html#filtro-colaborativo-basado-en-los-ítems-ibcf-1",
+    "title": "",
+    "section": "Filtro Colaborativo Basado en los Ítems (IBCF)",
+    "text": "Filtro Colaborativo Basado en los Ítems (IBCF)\n\nLas recomendaciones se basan en la relación entre ítems inferidos de la matriz de valoraciones\nSupone que los usuarios preferirán los artículos que sean similares a otros artículos que les gusten\nLas medidas de simitud son de nuevo la correlación de Pearson y la similitud del coseno\nPero ahora, los vectores de valoración \\(x\\) e \\(y\\) son columnas de \\(R\\) que representan las valoraciones de dos artículos"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ibcf",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ibcf",
+    "title": "",
+    "section": "IBCF",
+    "text": "IBCF"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ibcf---matriz-de-similitud",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ibcf---matriz-de-similitud",
+    "title": "",
+    "section": "IBCF - Matriz de similitud",
+    "text": "IBCF - Matriz de similitud\n\nLas similitudes entre pares se almacenan en una matriz de similitud \\(S\\) de \\(n × n\\)\nPara reducir el tamaño del modelo a \\(n × k\\) con \\(k ≪ n\\), para cada elemento sólo se almacena una lista de los \\(k\\) elementos más similares y sus valores de similitud\nLos \\(k\\) ítems más similares al ítem \\(i_l\\) se denotan por el conjunto \\(S(l)\\) que puede verse como el conjunto de vecinos de tamaño \\(k\\) del ítem"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ibcf---calcular-la-valoración-desconocida",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ibcf---calcular-la-valoración-desconocida",
+    "title": "",
+    "section": "IBCF - Calcular la valoración desconocida",
+    "text": "IBCF - Calcular la valoración desconocida\n\nUtilizamos las similitudes para calcular una suma ponderada de las valoraciones del usuario para los artículos relacionados\n\n\\[\\hat{r}_{al} = \\frac{1}{\\sum{i \\in S(l)}s_{li}} \\sum_{i \\in S(l)}{s_{li} r_{ai}}\\]\n\nEl sesgo del usuario puede reducirse normalizando primero la matriz de valoración usuario-ítem antes de calcular la matriz de similitud ítem-ítem"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#comparación-entre-ubcf-e-ibcf",
+    "href": "material/parte1-sistemas_de_recomendacion.html#comparación-entre-ubcf-e-ibcf",
+    "title": "",
+    "section": "Comparación entre UBCF e IBCF",
+    "text": "Comparación entre UBCF e IBCF\n\nEl IBCF es más eficiente que UBCF, ya que la matriz de similitud reducida es relativamente pequeña \\((N × k)\\) y puede ser precalculado en su totalidad\nIBCF sólo produce resultados ligeramente inferiores en comparación con UBCF\nIBCF se aplica con éxito en sistemas de recomendación a gran escala, como por ejemplo en Amazon"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#técnicas-de-evaluación",
+    "href": "material/parte1-sistemas_de_recomendacion.html#técnicas-de-evaluación",
+    "title": "",
+    "section": "Técnicas de evaluación",
+    "text": "Técnicas de evaluación\n\nLos algoritmos de recomendación se evalúan dividiendo \\(R\\) en dos conjuntos de usuarios \\(U_{train} \\cup U_{test} = U\\)\n\\(U_{train}\\) se utiliza para generar el modelo de recomendación\nA continuación, cada usuario \\(u_a \\in U_{test}\\) se considera un usuario activo\nAntes de crear las recomendaciones, se retienen algunos elementos del perfil \\(r_{u_a}\\) y se mide lo bien que coincide la valoración predicha con el valor retenido\nPor último, se promedian las medidas de evaluación calculadas para todos los usuarios de \\(U_{test}\\)"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#técnicas-de-splitting",
+    "href": "material/parte1-sistemas_de_recomendacion.html#técnicas-de-splitting",
+    "title": "",
+    "section": "Técnicas de splitting",
+    "text": "Técnicas de splitting\n\nDivisión (Splitting): Asignación aleatoria.\nMuestreo Bootstrap: Muestreo con reemplazo. Ideal para conjuntos de datos pequeños.\nValidación cruzada k-fold:\n\nDividir \\(U\\) en \\(k\\) conjuntos (folds) del mismo tamaño\nEvaluar \\(k\\) veces con un fold para test y el resto para train\nPromediar los \\(k\\) resultados\nCada usuario está al menos una vez en el conjunto de pruebas y es más robusto"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#métricas-de-evaluación",
+    "href": "material/parte1-sistemas_de_recomendacion.html#métricas-de-evaluación",
+    "title": "",
+    "section": "Métricas de evaluación",
+    "text": "Métricas de evaluación\n\nRoot mean square error (RMSE): Es la desviación típica de la diferencia entre las valoraciones reales y las previstas.\nMean squared error (MSE): Es la media de la diferencia al cuadrado entre las valoraciones real y prevista. Es el cuadrado del RMSE, por lo que contiene la misma información.\nMean absolute error (MAE): Es la media de la diferencia absoluta entre las valoraciones real y prevista."
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#matriz-de-confunsión",
+    "href": "material/parte1-sistemas_de_recomendacion.html#matriz-de-confunsión",
+    "title": "",
+    "section": "Matriz de confunsión",
+    "text": "Matriz de confunsión\n\nLa matriz de confusión muestra cuántos de los ítems recomendados han sido correctos y cuántos incorrectos, así como, cuántos de los no recomendados deberían haberlo sido"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#curva-roc",
+    "href": "material/parte1-sistemas_de_recomendacion.html#curva-roc",
+    "title": "",
+    "section": "Curva ROC",
+    "text": "Curva ROC\n\n\n\nLa curva ROC es la representación gráfica de la sensibilidad frente a 1-especificidad\nEl área bajo la curva ROC se denomina AUC\nEl valor ideal del AUC es 1, es decir, cuando la curva ROC pasa por el vértice superior izquierdo\n\n\n\n\n\nhttps://polmartisanahuja.com/entendiendo-la-curva-roc-y-el-auc-dos-medidas-del-rendimiento-de-un-clasificador-binario-que-van-de-la-mano/"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#otros-algoritmos-de-filtro-colaborativo",
+    "href": "material/parte1-sistemas_de_recomendacion.html#otros-algoritmos-de-filtro-colaborativo",
+    "title": "",
+    "section": "Otros algoritmos de Filtro Colaborativo",
+    "text": "Otros algoritmos de Filtro Colaborativo\n\nAlgoritmo Slope One, un enfoque simple y popular basado en ítems (Lemire y Maclachlan 2005)\nEnfoque de factores latentes mediante la descomposición matricial (Koren et al. 2009)\nModelos basados en Deep Learning (Zhang, Yao, Sun y Tay 2019)."
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#dificultades-algoritmos-de-filtro-colaborativo",
+    "href": "material/parte1-sistemas_de_recomendacion.html#dificultades-algoritmos-de-filtro-colaborativo",
+    "title": "",
+    "section": "Dificultades algoritmos de Filtro Colaborativo",
+    "text": "Dificultades algoritmos de Filtro Colaborativo\n\nBase de usuarios es cambiante\nEl catálogo es dinámico\nFeedback escaso\nSensibilidad Temporal no recogida:\n\nPopularidad del contenido cambia\nIntereses de los usuarios cambian\nSe debe responder rápidamente a dichos cambios"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#métodos-basados-en-contenido-1",
+    "href": "material/parte1-sistemas_de_recomendacion.html#métodos-basados-en-contenido-1",
+    "title": "",
+    "section": "Métodos basados en contenido",
+    "text": "Métodos basados en contenido\n\nA diferencia de los anteriores, utilizan información adicional de los usuarios y/ o de los ítems\nEn un sistema de películas por ejemplo, esto pueden ser la edad, el sexo del usuario y la categoría, actores, o duración de la película\nModelo basado en features disponibles que explica las interacciones observadas entre usuario-ítem\nPara recomendar un nueva película solo tendremos que mirar el perfil del usuario y recomendar en función de la información que vemos"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#ejemplo.-algoritmos-multi-armed-bandits",
+    "href": "material/parte1-sistemas_de_recomendacion.html#ejemplo.-algoritmos-multi-armed-bandits",
+    "title": "",
+    "section": "Ejemplo. Algoritmos Multi-armed Bandits",
+    "text": "Ejemplo. Algoritmos Multi-armed Bandits\n\nSon una forma de aprendizaje de refuerzo o Reinforcement Learning clásico\nIntentan equilibrar la exploración de nuevas acciones y la explotación de la mejor acción actual para maximizar la recompensa\nEl objetivo es aprender y elegir acciones que maximicen la recompensa total\nContextual Bandits. Recogen y observan el contexto antes de cada acción, y eligen acciones basadas en el contexto. Aprenden cómo las acciones y el contexto afectan a la recompensa"
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#the-artwork-personalization",
+    "href": "material/parte1-sistemas_de_recomendacion.html#the-artwork-personalization",
+    "title": "",
+    "section": "The Artwork Personalization",
+    "text": "The Artwork Personalization\n\nNetflix utiliza el algoritmo Contextual Bandits para personalizar las imágenes de las películas en la página de inicio\nAcción: El bandit puede elegir entre un conjunto de imágenes para cada ítem\nRecompensa: Número de minutos que el usuario reproduce la serie o película dada una caráctula concreta\nContexto: Información del usuario (por ejemplo, títulos reproducidos, géneros reproducidos, país, preferencias de idioma), día de la semana, hora del día, etc."
+  },
+  {
+    "objectID": "material/parte1-sistemas_de_recomendacion.html#bibliografía",
+    "href": "material/parte1-sistemas_de_recomendacion.html#bibliografía",
+    "title": "",
+    "section": "Bibliografía",
+    "text": "Bibliografía\n\nIntroduction to Recommender Systems Handbook\nIntroduction to Recommender Systems\nThe Artwork Personalization by Netflix\n\n\n\n\nhttps://elartedeldato.com"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#qué-es-un-sistema-de-recomendación",
+    "href": "material/global-intro-sistemas-reco.html#qué-es-un-sistema-de-recomendación",
+    "title": "",
+    "section": "Qué es un Sistema de Recomendación",
+    "text": "Qué es un Sistema de Recomendación\nLos sistemas de recomendación son algoritmos que permiten sugerir ítems a usuarios de forma personalizada, basándose en datos históricos o features de los usuarios e ítems."
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#dónde-se-aplican",
+    "href": "material/global-intro-sistemas-reco.html#dónde-se-aplican",
+    "title": "",
+    "section": "Dónde se aplican",
+    "text": "Dónde se aplican\nEn los últimos años, están presentes en la mayor parte de plataformas de entretenimiento así como comercios online y otros servicios web.\n\nAmazon utiliza sistemas recomendación para vender artículos que puedan interesar a los comparadores\nGoogle con Youtube, recomienda vídeos en función de las visualizaciones de los usuarios\nSpotify para la recomendación y exploración de canciones y lista de reproducción que puedan interesar a los oyentes"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#ventajas-de-los-sistemas-de-recomendación",
+    "href": "material/global-intro-sistemas-reco.html#ventajas-de-los-sistemas-de-recomendación",
+    "title": "",
+    "section": "Ventajas de los Sistemas de Recomendación",
+    "text": "Ventajas de los Sistemas de Recomendación\n\nPermite destacar frente a competidores\nProvocan que el usuario permanezca más tiempo en la plataforma\nDiversificar las ventas de productos poco usuales mediante exploración de productos\nComprender las preferencias del usuario"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#the-netflix-prize",
+    "href": "material/global-intro-sistemas-reco.html#the-netflix-prize",
+    "title": "",
+    "section": "The Netflix Prize",
+    "text": "The Netflix Prize\nEn 2006, Netflix organizó un concurso abierto para el mejor algoritmo de filtrado colaborativo para predecir las valoraciones de los usuarios de las películas, basándose en las valoraciones anteriores sin ninguna otra información sobre los usuarios o las películas.\n\n100.480.507 calificaciones de 1 a 5 estrellas\n480.189 usuarios\n17.770 películas\nEl premio: 1.000.000 $\n\n\nHoy en día cuenta con 220 millones de usuarios"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#conceptos-básicos",
+    "href": "material/global-intro-sistemas-reco.html#conceptos-básicos",
+    "title": "",
+    "section": "Conceptos básicos",
+    "text": "Conceptos básicos\nEn los sistemas de recomendación se utiliza una nomenclatura común:\n\nUsuario: Individuo que provee valoraciones sobre ítems y al que posteriormente se le recomienda\nÍtem, producto: Objecto a recomendar al usuario\nRating: Valoración o preferencia del ítem a recomendar. Por ejemplo, calificación de 1 a 5 de menor a mayor preferencia.\nCatálogo de productos: Listado de productos o ítems disponibles a recomendar."
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#tipos-de-sistemas-de-recomendación",
+    "href": "material/global-intro-sistemas-reco.html#tipos-de-sistemas-de-recomendación",
+    "title": "",
+    "section": "Tipos de sistemas de recomendación",
+    "text": "Tipos de sistemas de recomendación\n {fig-align=“center”;}"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#filtro-colaborativo",
+    "href": "material/global-intro-sistemas-reco.html#filtro-colaborativo",
+    "title": "",
+    "section": "Filtro colaborativo",
+    "text": "Filtro colaborativo\n\nSe basa en interacciones pasadas entre usuarios e ítems para producir nuevas recomendaciones\nLas iteracciones se almacenan en las matrices de interacción usuario-ítem\nSupone que interacciones pasadas son suficientes para detectar usuarios o ítems similares"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#problema-del-arranque-en-frío-o-cold-start",
+    "href": "material/global-intro-sistemas-reco.html#problema-del-arranque-en-frío-o-cold-start",
+    "title": "",
+    "section": "Problema del arranque en frío o cold-start",
+    "text": "Problema del arranque en frío o cold-start\n\nNo es posible recomendar sin interacciones previas entre usario-ítem\nSoluciones comunes:\n\nRecomendación aleatoria\nRecomendación de ítems más populares\nRecomendación de un set de varios ítems a nuevos usuarios o un nuevo ítem a varios usuarios"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#filtro-colaborativo---categorías",
+    "href": "material/global-intro-sistemas-reco.html#filtro-colaborativo---categorías",
+    "title": "",
+    "section": "Filtro colaborativo - Categorías",
+    "text": "Filtro colaborativo - Categorías\n\nBasados en usuario\n\nAlgoritmo que asume que usuarios con preferencias similares valorarán elementos de forma similar\n\nBasados en ítems\n\nSupone que los usuarios preferirán los artículos que sean similares a otros artículos que les gusten"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#dificultades-algoritmos-de-filtro-colaborativo",
+    "href": "material/global-intro-sistemas-reco.html#dificultades-algoritmos-de-filtro-colaborativo",
+    "title": "",
+    "section": "Dificultades algoritmos de Filtro Colaborativo",
+    "text": "Dificultades algoritmos de Filtro Colaborativo\n\nBase de usuarios es cambiante\nEl catálogo es dinámico\nFeedback escaso\nSensibilidad Temporal no recogida:\n\nPopularidad del contenido cambia\nIntereses de los usuarios cambian\nSe debe responder rápidamente a dichos cambios"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#métodos-basados-en-contenido",
+    "href": "material/global-intro-sistemas-reco.html#métodos-basados-en-contenido",
+    "title": "",
+    "section": "Métodos basados en contenido",
+    "text": "Métodos basados en contenido\n\nA diferencia de los anteriores, utilizan información adicional de los usuarios y/ o de los ítems\nEn un sistema de películas por ejemplo, esto pueden ser la edad, el sexo del usuario y la categoría, actores, o duración de la película\nModelo basado en features disponibles que explica las interacciones observadas entre usuario-ítem\nPara recomendar un nueva película solo tendremos que mirar el perfil del usuario y recomendar en función de la información que vemos"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#ejemplo.-algoritmos-multi-armed-bandits",
+    "href": "material/global-intro-sistemas-reco.html#ejemplo.-algoritmos-multi-armed-bandits",
+    "title": "",
+    "section": "Ejemplo. Algoritmos Multi-armed Bandits",
+    "text": "Ejemplo. Algoritmos Multi-armed Bandits\n\nSon una forma de aprendizaje de refuerzo o Reinforcement Learning clásico\nIntentan equilibrar la exploración de nuevas acciones y la explotación de la mejor acción actual para maximizar la recompensa\nEl objetivo es aprender y elegir acciones que maximicen la recompensa total\nContextual Bandits. Recogen y observan el contexto antes de cada acción, y eligen acciones basadas en el contexto. Aprenden cómo las acciones y el contexto afectan a la recompensa"
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#the-artwork-personalization",
+    "href": "material/global-intro-sistemas-reco.html#the-artwork-personalization",
+    "title": "",
+    "section": "The Artwork Personalization",
+    "text": "The Artwork Personalization\n\nNetflix utiliza el algoritmo Contextual Bandits para personalizar las imágenes de las películas en la página de inicio\nAcción: El bandit puede elegir entre un conjunto de imágenes para cada ítem\nRecompensa: Número de minutos que el usuario reproduce la serie o película dada una caráctula concreta\nContexto: Información del usuario (por ejemplo, títulos reproducidos, géneros reproducidos, país, preferencias de idioma), día de la semana, hora del día, etc."
+  },
+  {
+    "objectID": "material/global-intro-sistemas-reco.html#bibliografía",
+    "href": "material/global-intro-sistemas-reco.html#bibliografía",
+    "title": "",
+    "section": "Bibliografía",
+    "text": "Bibliografía\n\nIntroduction to Recommender Systems Handbook\nIntroduction to Recommender Systems\nThe Artwork Personalization by Netflix\n\n-El caso Spotify\n\nEl caso Instagram )\n\n\n\n\nhttps://elartedeldato.com"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#en-esta-sessión-veremos",
+    "href": "material/parte2-recommenderlab.html#en-esta-sessión-veremos",
+    "title": "",
+    "section": "En esta sessión veremos…",
+    "text": "En esta sessión veremos…\n\nCómo instalar {recommenderlab}\nExploración de matrices de valoraciones\nVisualización de matrices de similaridad\nEjemplos de con diferentes algoritmos de recomendación"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#recommenderlab-la-librería-de-r",
+    "href": "material/parte2-recommenderlab.html#recommenderlab-la-librería-de-r",
+    "title": "",
+    "section": "{recommenderlab} – la librería de R",
+    "text": "{recommenderlab} – la librería de R\n\nFunciones de clase S4\nSe basa en el filtro colaborativo\nLa librería consta de 3 funciones principales, entre otras.\n\nRecommender\npredict\nevaluationScheme"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#instalación",
+    "href": "material/parte2-recommenderlab.html#instalación",
+    "title": "",
+    "section": "Instalación",
+    "text": "Instalación\n\nVersión de CRAN desde R:\n\n\ninstall.packages(\"recommenderlab\")\n\n\nVersion en desarrollo:\n\n\ninstall.packages(\"recommenderlab\", repos = \"https://mhahsler.r-universe.dev\")\n\nPodemos abrir la ayuda del paquete para obtener más informacioo4ón sobre las funciones disponibles.\n\nhelp(package = \"recommenderlab\")\n\nY los datos disponibles:\n\ndata(package = \"recommenderlab\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#ejemplo-1.-movielense.",
+    "href": "material/parte2-recommenderlab.html#ejemplo-1.-movielense.",
+    "title": "",
+    "section": "Ejemplo 1. MovieLense.",
+    "text": "Ejemplo 1. MovieLense."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#datos",
+    "href": "material/parte2-recommenderlab.html#datos",
+    "title": "",
+    "section": "Datos",
+    "text": "Datos\nEn primer lugar, cargamos los datos y los preparamos para utilizar el paquete {recommenderlab}. Utilizaremos el dataset MovieLense incluido en la propia librería.\nLos datos de MovieLense contienen las valoraciones de películas de 1 a 5. Para este primer ejemplo tomaremos tan solo 100 usuarios y 50 películas.\n\n\nlibrary(recommenderlab)\nlibrary(tidyverse)\nggplot2::theme_set(ggplot2::theme_minimal())\n\ndata(\"MovieLense\")\nMovieLense\n\n\n943 x 1664 rating matrix of class 'realRatingMatrix' with 99392 ratings.\n\n\n\n\nMovieLense[1:100, 1:50] -> MovieLenseSmall\nMovieLenseSmall\n\n100 x 50 rating matrix of class 'realRatingMatrix' with 834 ratings."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#visualizar-la-matriz-de-ratings",
+    "href": "material/parte2-recommenderlab.html#visualizar-la-matriz-de-ratings",
+    "title": "",
+    "section": "Visualizar la matriz de ratings",
+    "text": "Visualizar la matriz de ratings\n\nimage(MovieLense, main = \"Heatmap de la matriz de ratings\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#getratings",
+    "href": "material/parte2-recommenderlab.html#getratings",
+    "title": "",
+    "section": "getRatings",
+    "text": "getRatings\n\nCon la función getRatings vemos los valores de calificación no ausentes de la matriz\nCon la función getRatingMatrix vemos todos valores de calificación no ausentes de la matriz\n\n\ngetRatingMatrix(MovieLenseSmall[1:10, 1:4])\n\n10 x 4 sparse Matrix of class \"dgCMatrix\"\n   Toy Story (1995) GoldenEye (1995) Four Rooms (1995) Get Shorty (1995)\n1                 5                3                 4                 3\n2                 4                .                 .                 .\n3                 .                .                 .                 .\n4                 .                .                 .                 .\n5                 4                3                 .                 .\n6                 4                .                 .                 .\n7                 .                .                 .                 5\n8                 .                .                 .                 .\n9                 .                .                 .                 .\n10                4                .                 .                 4"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuál-es-la-valoración-más-común",
+    "href": "material/parte2-recommenderlab.html#cuál-es-la-valoración-más-común",
+    "title": "",
+    "section": "¿Cuál es la valoración más común?",
+    "text": "¿Cuál es la valoración más común?\nA continuación, visualizamos la distribución de valoraciones con la librería ggplot2.\nPara extraer las valoraciones de la matriz de ratings, utilizamos de nuevo getRatings.\n\ndata.frame(valoraciones = getRatings(MovieLenseSmall)) -> df_val\n\nggplot(df_val, aes(valoraciones)) + \n  geom_bar(width = 0.75, fill = \"dodgerblue2\") +\n  labs(title = 'Distribución de las valoraciones de MovielenseSmall')"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuál-es-la-valoración-más-común-output",
+    "href": "material/parte2-recommenderlab.html#cuál-es-la-valoración-más-común-output",
+    "title": "",
+    "section": "¿Cuál es la valoración más común?",
+    "text": "¿Cuál es la valoración más común?"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuántas-películas-valora-cada-usuario",
+    "href": "material/parte2-recommenderlab.html#cuántas-películas-valora-cada-usuario",
+    "title": "",
+    "section": "¿Cuántas películas valora cada usuario?",
+    "text": "¿Cuántas películas valora cada usuario?\nPara conocer cuántas películas valora cada usuario realizamos un diagrama de densidad del número de reviews que realiza cada usuario.\n\ndata.frame(reviews_por_persona = \n             rowCounts(MovieLenseSmall)) -> df_reviews_usuario\n\nggplot(df_reviews_usuario) + \n  geom_density(aes(x = reviews_por_persona), \n               fill = \"dodgerblue2\", color = \"dodgerblue2\", alpha = 0.5) +\n  labs(title = 'Distribución del número de reviews por persona', \n       x =\"Número de reviews\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuántas-películas-valora-cada-usuario-output",
+    "href": "material/parte2-recommenderlab.html#cuántas-películas-valora-cada-usuario-output",
+    "title": "",
+    "section": "¿Cuántas películas valora cada usuario?",
+    "text": "¿Cuántas películas valora cada usuario?"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuántas-valoraciones-tiene-cada-película",
+    "href": "material/parte2-recommenderlab.html#cuántas-valoraciones-tiene-cada-película",
+    "title": "",
+    "section": "¿Cuántas valoraciones tiene cada película?",
+    "text": "¿Cuántas valoraciones tiene cada película?\nPara conocer cuántas valoraciones tiene cdaa película, aplicamos la función colCounts sobre la matriz de valoraciones.\n\ndata.frame(reviews_por_pelicula = colCounts(MovieLenseSmall)) ->\n  df_reviews_pelicula\n\nggplot(df_reviews_pelicula) + \n  geom_col(aes(x = reorder(row.names(df_reviews_pelicula), -reviews_por_pelicula), \n               y = reviews_por_pelicula),\n          fill = \"dodgerblue2\") +\n  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +\n  labs(title = 'Número de reviews por persona', \n       x = \"Usuario\", y = \"Número de reviews\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#cuántas-valoraciones-tiene-cada-película-output",
+    "href": "material/parte2-recommenderlab.html#cuántas-valoraciones-tiene-cada-película-output",
+    "title": "",
+    "section": "¿Cuántas valoraciones tiene cada película?",
+    "text": "¿Cuántas valoraciones tiene cada película?"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#ejercicios",
+    "href": "material/parte2-recommenderlab.html#ejercicios",
+    "title": "",
+    "section": "Ejercicios",
+    "text": "Ejercicios\nEjercicio 1. Calcula el porcentaje de usuarios que valoran, como máximo, 20 películas.\nEjercicio 2. Encuentra la película más valorada y la mejor valorada (de media).\nPuedes calcular la media por fila con rowMeans y la media por columna con colMeans."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-usuarios",
+    "href": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-usuarios",
+    "title": "",
+    "section": "Visualizar la similaridad entre usuarios",
+    "text": "Visualizar la similaridad entre usuarios\n\nreshape2::melt(as.matrix(similarity(MovieLenseSmall)), na.rm = TRUE) |>\n  ggplot(aes(x=Var1, y=Var2, fill=value)) + \n    geom_tile() +\n    scale_fill_distiller(palette = \"PuRd\", direction = 1) +\n    labs(title = \"Matriz de Similiaridades enter usuarios\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-usuarios-output",
+    "href": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-usuarios-output",
+    "title": "",
+    "section": "Visualizar la similaridad entre usuarios",
+    "text": "Visualizar la similaridad entre usuarios"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-ítems",
+    "href": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-ítems",
+    "title": "",
+    "section": "Visualizar la similaridad entre ítems",
+    "text": "Visualizar la similaridad entre ítems\n\nas.matrix(\n  similarity(MovieLense[,1:5], \n             method = \"cosine\", # cosine, pearson, o jaccard\n             which = \"items\")\n  ) -> m_items\n\nm_items |>\n  as.data.frame() |>\n  rownames_to_column(\"peliculas\") |>\n  pivot_longer(-c(peliculas)) |>\n  ggplot(aes(x=name, y=peliculas, fill=value)) + \n    geom_raster() +\n    scale_fill_distiller(palette = \"PuRd\", direction = 1) +\n    labs(title = \"Matriz de Similiaridades enter 5 películas\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-ítems-output",
+    "href": "material/parte2-recommenderlab.html#visualizar-la-similaridad-entre-ítems-output",
+    "title": "",
+    "section": "Visualizar la similaridad entre ítems",
+    "text": "Visualizar la similaridad entre ítems"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#dividir-en-dataset-en-entrenamiento-y-test",
+    "href": "material/parte2-recommenderlab.html#dividir-en-dataset-en-entrenamiento-y-test",
+    "title": "",
+    "section": "1) Dividir en dataset en entrenamiento y test",
+    "text": "1) Dividir en dataset en entrenamiento y test\nDado que contamos con 100 usuarios, tomaremos los 75 primeros para entrenar, y los 25 restantes para testear.\n\ntrain <- MovieLenseSmall[1:75, ]\ntest <- MovieLenseSmall[76:100, ]\n\ntrain\n\n75 x 50 rating matrix of class 'realRatingMatrix' with 606 ratings.\n\ntest\n\n25 x 50 rating matrix of class 'realRatingMatrix' with 228 ratings."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#aplicar-un-algoritmo-de-recomendación",
+    "href": "material/parte2-recommenderlab.html#aplicar-un-algoritmo-de-recomendación",
+    "title": "",
+    "section": "2) Aplicar un algoritmo de recomendación",
+    "text": "2) Aplicar un algoritmo de recomendación\n\nLos algoritmos de recomendación se almacenan en un objeto de registro llamado recommenderRegistry\n\n\nrecommenderRegistry$get_entries(dataType = \"realRatingMatrix\")\n\n\nAplicaremos el recomendador basado en el filtrado colaborativo de usuarios, UBCF con los parámetros por defecto del modelo.\n\n\nrec_ubcf <- Recommender(train, method = \"UBCF\")\nrec_ubcf\n\nRecommender of type 'UBCF' for 'realRatingMatrix' \nlearned using 75 users."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#generar-nuevas-recomendaciones",
+    "href": "material/parte2-recommenderlab.html#generar-nuevas-recomendaciones",
+    "title": "",
+    "section": "3) Generar nuevas recomendaciones",
+    "text": "3) Generar nuevas recomendaciones\n\nVamos a crear recomendaciones para el usuario 76 (no visto por el algoritmo anteriormente)\nPara crear nuevas recomendaciones utilizamos la función predict a la que pasaremos el modelo previamente creado de clase Recommender y el usuario al cual queremos recomendar\n\n\npred <- predict(rec_ubcf, MovieLenseSmall[76], type = \"ratings\")\npred\n\n1 x 50 rating matrix of class 'realRatingMatrix' with 44 ratings."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-1",
+    "href": "material/parte2-recommenderlab.html#section-1",
+    "title": "",
+    "section": "",
+    "text": "library(knitr)\nas(pred, \"data.frame\") |>\n  arrange(-rating) |>\n  kable()\n\n\n\n\n\n\n\n\n\nuser\nitem\nrating\n\n\n\n\n76\nHoop Dreams (1994)\n4.401564\n\n\n76\nEat Drink Man Woman (1994)\n4.327858\n\n\n76\nStar Wars (1977)\n4.284340\n\n\n76\nFrench Twist (Gazon maudit) (1995)\n4.267342\n\n\n76\nDead Man Walking (1995)\n4.107345\n\n\n76\nAngels and Insects (1995)\n4.086667\n\n\n76\nDisclosure (1994)\n4.086667\n\n\n76\nExotica (1994)\n4.086667\n\n\n76\nBraveheart (1995)\n4.072939\n\n\n76\nMr. Holland’s Opus (1995)\n4.060142\n\n\n76\nApollo 13 (1995)\n4.060021\n\n\n76\nPostino, Il (1994)\n3.977975\n\n\n76\nAntonia’s Line (1995)\n3.973700\n\n\n76\nDolores Claiborne (1994)\n3.970217\n\n\n76\nMighty Aphrodite (1995)\n3.963076\n\n\n76\nToy Story (1995)\n3.943202\n\n\n76\nDesperado (1995)\n3.910056\n\n\n76\nBelle de jour (1967)\n3.902709\n\n\n76\nI.Q. (1994)\n3.819883\n\n\n76\nEd Wood (1994)\n3.738320\n\n\n76\nFour Rooms (1995)\n3.701961\n\n\n76\nGet Shorty (1995)\n3.631081\n\n\n76\nCrimson Tide (1995)\n3.594167\n\n\n76\nCrumb (1994)\n3.556890\n\n\n76\nBabe (1995)\n3.554113\n\n\n76\nStrange Days (1995)\n3.481789\n\n\n76\nBrothers McMullen, The (1995)\n3.364756\n\n\n76\nWhite Balloon, The (1995)\n3.302032\n\n\n76\nGoldenEye (1995)\n3.273429\n\n\n76\nRichard III (1995)\n3.188702\n\n\n76\nBirdcage, The (1996)\n3.115318\n\n\n76\nTo Wong Foo, Thanks for Everything! Julie Newmar (1995)\n3.038237\n\n\n76\nBad Boys (1995)\n3.007599\n\n\n76\nSeven (Se7en) (1995)\n2.927373\n\n\n76\nFrom Dusk Till Dawn (1996)\n2.821857\n\n\n76\nNet, The (1995)\n2.817318\n\n\n76\nBatman Forever (1995)\n2.626085\n\n\n76\nCopycat (1995)\n2.515713\n\n\n76\nMuppet Treasure Island (1996)\n2.184374\n\n\n76\nDoom Generation, The (1995)\n2.086667\n\n\n76\nMad Love (1995)\n2.086667\n\n\n76\nBilly Madison (1995)\n2.086667\n\n\n76\nNadja (1994)\n1.737000\n\n\n76\nFree Willy 2: The Adventure Home (1995)\n1.086667"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-2",
+    "href": "material/parte2-recommenderlab.html#section-2",
+    "title": "",
+    "section": "",
+    "text": "Se pueden generar recomendaciones para varios usuarios al mismo tiempo, pero tengamos en cuenta que la función predict tiene como límite 10 usuarios.\nTambién se puede obtener directamente un top-N de reocmendaciones en forma de lista, obviando las valoraciones estimadas.\n\n\npred_top_n <- predict(rec_ubcf, MovieLenseSmall[76], n = 5)\npred_top_n\n\nRecommendations as 'topNList' with n = 5 for 1 users."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-3",
+    "href": "material/parte2-recommenderlab.html#section-3",
+    "title": "",
+    "section": "",
+    "text": "as(pred_top_n, \"list\") |>\n  kable(col.names = c(\"Top 5 películas\"))\n\n\n\n\n\n\n\n\n\nTop 5 películas\n\n\n\n\nHoop Dreams (1994)\n\n\nEat Drink Man Woman (1994)\n\n\nStar Wars (1977)\n\n\nFrench Twist (Gazon maudit) (1995)\n\n\nDead Man Walking (1995)"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-4",
+    "href": "material/parte2-recommenderlab.html#section-4",
+    "title": "",
+    "section": "",
+    "text": "Podríamos aplicar otro algoritmo de recomendación y compararlo.\n\nrec_popular <- Recommender(train, method = \"POPULAR\")\nrec_popular\n\nRecommender of type 'POPULAR' for 'realRatingMatrix' \nlearned using 75 users.\n\n\n\npred_top_n <- predict(rec_popular, MovieLenseSmall[76], n = 5)\npred_top_n\n\nRecommendations as 'topNList' with n = 5 for 1 users."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-5",
+    "href": "material/parte2-recommenderlab.html#section-5",
+    "title": "",
+    "section": "",
+    "text": "as(pred_top_n, \"list\") |>\n  kable(col.names = c(\"Top 5 películas\"))\n\n\n\n\n\n\n\n\n\nTop 5 películas\n\n\n\n\nStar Wars (1977)\n\n\nDead Man Walking (1995)\n\n\nBraveheart (1995)\n\n\nMr. Holland’s Opus (1995)\n\n\nPostino, Il (1994)"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#generar-un-esquema-de-evaluación",
+    "href": "material/parte2-recommenderlab.html#generar-un-esquema-de-evaluación",
+    "title": "",
+    "section": "1) Generar un esquema de evaluación",
+    "text": "1) Generar un esquema de evaluación\n\nset.seed(1)\nevaluationScheme(MovieLense, # Conjunto de datos como `ratingMatrix`\n                 method = 'split', # Método de splitting\n                 train = 0.75, # Fracción de entrenamiento\n                 given = 10,# Número único de elementos dados para la evaluación\n                 goodRating = 4 # Umbral para dar calificaciones como buenas\n                 ) -> MovieLense_esquema\nMovieLense_esquema\n\nEvaluation scheme with 10 items given\nMethod: 'split' with 1 run(s).\nTraining set proportion: 0.750\nGood ratings: >=4.000000\nData set: 943 x 1664 rating matrix of class 'realRatingMatrix' with 99392 ratings."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#aplicar-un-algoritmo-de-recomendación-1",
+    "href": "material/parte2-recommenderlab.html#aplicar-un-algoritmo-de-recomendación-1",
+    "title": "",
+    "section": "2) Aplicar un algoritmo de recomendación",
+    "text": "2) Aplicar un algoritmo de recomendación\n\nDefinir los parámetros del modelo\n\n\nlist(method = \"cosine\", # Métrica de similaridad\n     nn = 25 # Tamaño del conjunto de usuarios más cercanos\n     ) -> model_params\n\n\nAplicar el modelo\n\n\nRecommender(\n  getData(MovieLense_esquema, \"train\"), # Matriz de entrenamiento\n            method = \"UBCF\", # Método de recomendación\n            parameter = model_params # Parámetros del algoritmo de recomendación\n  ) -> rec_UBCF_avanzado\nrec_UBCF_avanzado\n\nRecommender of type 'UBCF' for 'realRatingMatrix' \nlearned using 707 users."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#generar-nuevas-recomendaciones-1",
+    "href": "material/parte2-recommenderlab.html#generar-nuevas-recomendaciones-1",
+    "title": "",
+    "section": "3) Generar nuevas recomendaciones",
+    "text": "3) Generar nuevas recomendaciones\n\nLa función predict permite generar nuevas recomendaciones utilizando un modelo de recomendación y datos sobre nuevos usuarios\nDe entrada, se utiliza la parte de los datos de test conocida (oculta para el algoritmo)\n\n\npredict(rec_UBCF_avanzado, # Modelo de recomendación de clase Recommender\n        getData(MovieLense_esquema, \"known\"), # Datos de usuarios test\n        type = \"ratings\" # Tipo de recomendación: topNList, ratings, ratingsMatrix\n        ) -> pred_UBCF_avanzado\npred_UBCF_avanzado\n\n236 x 1664 rating matrix of class 'realRatingMatrix' with 153759 ratings."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#evaluar-la-precisión-de-la-predicción",
+    "href": "material/parte2-recommenderlab.html#evaluar-la-precisión-de-la-predicción",
+    "title": "",
+    "section": "4) Evaluar la precisión de la predicción",
+    "text": "4) Evaluar la precisión de la predicción\n\nLa función calcPredictionAccuracy permite evaluar el error de predicción\nSe puede dar por usuario o en global\nPara el cálculo de las métricas se utilizan las datos de test desconocidos\n\n\ncalcPredictionAccuracy(pred_UBCF_avanzado, \n                       getData(MovieLense_esquema, \"unknown\"), \n                       byUser = TRUE) -> error_UBCF_avanzado\nhead(error_UBCF_avanzado, 3) # Error de los 3 primeros usuarios\n\n       RMSE      MSE       MAE\n2  1.167064 1.362037 0.8677961\n10 1.019151 1.038669 0.8414931\n18 1.111185 1.234732 0.8571896"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#evaluar-el-agoritmo-para-el-top-n",
+    "href": "material/parte2-recommenderlab.html#evaluar-el-agoritmo-para-el-top-n",
+    "title": "",
+    "section": "5) Evaluar el agoritmo para el top-N",
+    "text": "5) Evaluar el agoritmo para el top-N\n\nLa función evaluate nos permite un algoritmo para diferentes top-N elementos\nGeneramos listas top-N de diferente número de recomendaciones, por ejemplo, 1, 3, 7, 10, 15, 20.\n\n\nevaluate(MovieLense_esquema, method = \"UBCF\", type = \"topNList\", \n          n = c(1, 3, 7, 10, 15, 20)) -> eval_UBCF\n\nUBCF run fold/sample [model time/prediction time]\n     1  [0.003sec/0.706sec] \n\ngetConfusionMatrix(eval_UBCF)\n\n[[1]]\n             TP         FP       FN       TN    N  precision      recall\n[1,] 0.03389831  0.9661017 49.54661 1603.453 1654 0.03389831 0.000289396\n[2,] 0.12288136  2.8771186 49.45763 1601.542 1654 0.04096045 0.002079180\n[3,] 0.36016949  6.6398305 49.22034 1597.780 1654 0.05145278 0.005583783\n[4,] 0.53813559  9.4618644 49.04237 1594.958 1654 0.05381356 0.010432299\n[5,] 0.79237288 14.2076271 48.78814 1590.212 1654 0.05282486 0.015400873\n[6,] 1.06355932 18.9364407 48.51695 1585.483 1654 0.05317797 0.021077997\n             TPR          FPR  n\n[1,] 0.000289396 0.0006017372  1\n[2,] 0.002079180 0.0017927193  3\n[3,] 0.005583783 0.0041346359  7\n[4,] 0.010432299 0.0058920890 10\n[5,] 0.015400873 0.0088487832 15\n[6,] 0.021077997 0.0117942723 20\n\nplot(eval_UBCF, annotate=TRUE) # Curva ROC\n\n\n\nplot(eval_UBCF, \"prec/rec\", annotate=TRUE)"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#comparación-de-algoritmos",
+    "href": "material/parte2-recommenderlab.html#comparación-de-algoritmos",
+    "title": "",
+    "section": "6) Comparación de algoritmos",
+    "text": "6) Comparación de algoritmos\n\nEn los sistemas de recomendación es necesario a veces probar con diferentes modelos y elegir el de mejor resultado\nLa función evaluate también nos permite evaluar varios algoritmos al mismo tiempo"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#section-6",
+    "href": "material/parte2-recommenderlab.html#section-6",
+    "title": "",
+    "section": "",
+    "text": "algoritmos <- list(\n    `random items` = list(name = \"RANDOM\", param = NULL), \n    `popular items` = list(name = \"POPULAR\", param = NULL), \n    `user-based CF` = list(name = \"UBCF\", param = list(nn = 3)), \n    `item-based CF` = list(name = \"IBCF\", param = list(k = 100)))\n\nevaluate(MovieLense_esquema, algoritmos, type = \"topNList\", \n         n = c(1, 3, 7, 10, 15, 20)) -> eval_varios\n\nRANDOM run fold/sample [model time/prediction time]\n     1  [0.001sec/0.082sec] \nPOPULAR run fold/sample [model time/prediction time]\n     1  [0.004sec/0.35sec] \nUBCF run fold/sample [model time/prediction time]\n     1  [0.003sec/0.616sec] \nIBCF run fold/sample [model time/prediction time]\n     1  [1.72sec/0.035sec] \n\n\n\nplot(eval_varios, annotate = 2, legend = \"topleft\")"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#conclusiones",
+    "href": "material/parte2-recommenderlab.html#conclusiones",
+    "title": "",
+    "section": "Conclusiones",
+    "text": "Conclusiones\n\nEl peor modelo es el aleatorio, seguido por el filtro colaborativo basado en ítems.\nEl mejor modelo es el popular, distando en mayor medida del siguiente mejor modelo, UBCF\nPara listas top-1, el IBCF es ligeramente mejor que UBCF\nPara lista top-n, con \\(n>1\\), UBCF funciona mejor que IBCF"
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#ejercicios-1",
+    "href": "material/parte2-recommenderlab.html#ejercicios-1",
+    "title": "",
+    "section": "Ejercicios",
+    "text": "Ejercicios\nEjercicio 3. Aplica sobre el conjunto de datos MovieLense el algoritmo IBCF y compara el resultado con el UBCF. Compara ambos modelos a través de las métricas de evaluación vistas. Por ejemplo, utiliza la curva ROC para comparalos."
+  },
+  {
+    "objectID": "material/parte2-recommenderlab.html#bibliografía",
+    "href": "material/parte2-recommenderlab.html#bibliografía",
+    "title": "",
+    "section": "Bibliografía",
+    "text": "Bibliografía\n\nManual de Recommenderlab\nBuilding a Recommender Sytem with R\nTutorial con Recommenderlab\n\n\n\n\nhttps://elartedeldato.com"
+  },
+  {
+    "objectID": "index.html#instructora",
+    "href": "index.html#instructora",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Instructora",
+    "text": "Instructora\nPaula es científica de datos en el sector tecnológico, experta en visualización de datos y R.\nGraduada en Estadística, comenzó su carrera profesional en Telefónica, diseñando sistemas de recomendación basados en Reinforcement Learning.\nEn la universidad, ha colaborado como investigadora en el departamento de Estadística e Investigación Operativa de la UVa y ha impartido clases sobre ciencia de datos en varias universidades.\nEs autora de El arte del dato bien contado, un blog de visualización de datos y cuenta con diversas charlas y cursos sobre ciencia de datos, visualización, estadística y R.\n\n This work is licensed under a Creative Commons Attribution 4.0 International License."
+  },
+  {
+    "objectID": "index.html#programación",
+    "href": "index.html#programación",
+    "title": "Masterclass - Introducción a los Sistemas de Recomendación",
+    "section": "Programación",
+    "text": "Programación\n\nParte 1 - Introducción a los Sistemas de Recomendación\nParte 2 - {recommenderlab}, la librería de R de Algoritmos de Recomendación\nParte 3 - Construyendo Netflix en R con Shiny"
+  }
+]

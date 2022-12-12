@@ -1,0 +1,13 @@
+name: Netflix
+title: Netflix
+username:
+account: paulalcasado
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7875463
+bundleId: 6627577
+url: https://paulalcasado.shinyapps.io/Netflix/
+when: 1670859543.89007
+lastSyncTime: 1670859543.89008
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,411 @@
+---
+format: 
+  revealjs:
+    theme: simple
+    css: "custom.css"
+    slide-number: c/t
+    logo: "img/logo_elarte.jpeg"
+    footer: "https://elartedeldato.com"
+    echo: true
+    cache: true
+    title-slide-attributes:
+      data-background-image: "img/bg2.png"
+---
+
+# Parte 2. {recommenderlab} {background-color="#000"}
+
+Paula López Casado - 21-12-2022
+
+## En esta sessión veremos...
+
+-   Cómo instalar {recommenderlab}
+-   Exploración de matrices de valoraciones
+-   Visualización de matrices de similaridad
+-   Ejemplos de con diferentes algoritmos de recomendación
+
+## {recommenderlab} -- la librería de R
+
+-   Funciones de clase S4
+
+-   Se basa en el **filtro colaborativo**
+
+-   La librería consta de 3 funciones principales, entre otras.
+
+    -   `Recommender`
+    -   `predict`
+    -   `evaluationScheme`
+
+## 
+
+![](img/recommenderlab-schema.png)
+
+## Instalación
+
+-   Versión de CRAN desde R:
+
+```{r, eval = FALSE}
+install.packages("recommenderlab")
+```
+
+-   Version en desarrollo:
+
+```{r, eval = FALSE}
+install.packages("recommenderlab", repos = "https://mhahsler.r-universe.dev")
+```
+
+Podemos abrir la ayuda del paquete para obtener más informacioo4ón sobre las funciones disponibles.
+
+```{r}
+help(package = "recommenderlab")
+```
+
+Y los datos disponibles:
+
+```{r}
+data(package = "recommenderlab")
+```
+
+## Ejemplo 1. MovieLense.
+
+## Datos
+
+En primer lugar, cargamos los datos y los preparamos para utilizar el paquete {recommenderlab}. Utilizaremos el dataset *MovieLense* incluido en la propia librería.
+
+Los datos de MovieLense contienen las valoraciones de películas de 1 a 5. Para este primer ejemplo tomaremos tan solo 100 usuarios y 50 películas.
+
+```{r}
+#| output-location: column
+library(recommenderlab)
+library(tidyverse)
+ggplot2::theme_set(ggplot2::theme_minimal())
+
+data("MovieLense")
+MovieLense
+```
+
+```{r}
+MovieLense[1:100, 1:50] -> MovieLenseSmall
+MovieLenseSmall
+```
+
+## Visualizar la matriz de ratings
+
+```{r}
+image(MovieLense, main = "Heatmap de la matriz de ratings")
+```
+
+## `getRatings`
+
+-   Con la función `getRatings` vemos los valores de calificación no ausentes de la matriz
+
+-   Con la función `getRatingMatrix` vemos **todos** valores de calificación no ausentes de la matriz
+
+```{r}
+getRatingMatrix(MovieLenseSmall[1:10, 1:4])
+```
+
+## ¿Cuál es la valoración más común?
+
+A continuación, visualizamos la distribución de valoraciones con la librería `ggplot2`.
+
+Para extraer las valoraciones de la matriz de ratings, utilizamos de nuevo `getRatings`.
+
+```{r}
+#| output-location: slide
+data.frame(valoraciones = getRatings(MovieLenseSmall)) -> df_val
+
+ggplot(df_val, aes(valoraciones)) + 
+  geom_bar(width = 0.75, fill = "dodgerblue2") +
+  labs(title = 'Distribución de las valoraciones de MovielenseSmall')
+```
+
+## ¿Cuántas películas valora cada usuario?
+
+Para conocer cuántas películas valora cada usuario realizamos un diagrama de densidad del número de reviews que realiza cada usuario.
+
+```{r}
+#| output-location: slide
+data.frame(reviews_por_persona = 
+             rowCounts(MovieLenseSmall)) -> df_reviews_usuario
+
+ggplot(df_reviews_usuario) + 
+  geom_density(aes(x = reviews_por_persona), 
+               fill = "dodgerblue2", color = "dodgerblue2", alpha = 0.5) +
+  labs(title = 'Distribución del número de reviews por persona', 
+       x ="Número de reviews")
+```
+
+## ¿Cuántas valoraciones tiene cada película?
+
+Para conocer cuántas valoraciones tiene cdaa película, aplicamos la función `colCounts` sobre la matriz de valoraciones.
+
+```{r}
+#| output-location: slide
+#| fig-height: 7
+data.frame(reviews_por_pelicula = colCounts(MovieLenseSmall)) ->
+  df_reviews_pelicula
+
+ggplot(df_reviews_pelicula) + 
+  geom_col(aes(x = reorder(row.names(df_reviews_pelicula), -reviews_por_pelicula), 
+               y = reviews_por_pelicula),
+          fill = "dodgerblue2") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = 'Número de reviews por persona', 
+       x = "Usuario", y = "Número de reviews")
+```
+
+## Ejercicios {background-color="#4758ab"}
+
+### Ejercicio 1. Calcula el porcentaje de usuarios que valoran, como máximo, 20 películas.
+
+### Ejercicio 2. Encuentra la película más valorada y la mejor valorada (de media).
+
+*Puedes calcular la media por fila con `rowMeans` y la media por columna con `colMeans`*.
+
+## Visualizar la similaridad entre usuarios
+
+```{r}
+#| output-location: slide
+#| fig-height: 6
+#| fig-width: 8
+#| fig-align: center
+reshape2::melt(as.matrix(similarity(MovieLenseSmall)), na.rm = TRUE) |>
+  ggplot(aes(x=Var1, y=Var2, fill=value)) + 
+    geom_tile() +
+    scale_fill_distiller(palette = "PuRd", direction = 1) +
+    labs(title = "Matriz de Similiaridades enter usuarios")
+```
+
+## Visualizar la similaridad entre ítems
+
+```{r}
+#| output-location: slide
+as.matrix(
+  similarity(MovieLense[,1:5], 
+             method = "cosine", # cosine, pearson, o jaccard
+             which = "items")
+  ) -> m_items
+
+m_items |>
+  as.data.frame() |>
+  rownames_to_column("peliculas") |>
+  pivot_longer(-c(peliculas)) |>
+  ggplot(aes(x=name, y=peliculas, fill=value)) + 
+    geom_raster() +
+    scale_fill_distiller(palette = "PuRd", direction = 1) +
+    labs(title = "Matriz de Similiaridades enter 5 películas")
+```
+
+# Ejemplo básico {background-color="#4758ab"}
+
+Como primer ejemplo podemos dividir manualmente el conjunto de datos en entrenamiento y test, aplicar un modelo de recomendación, con los parámetros por defecto del modelo, y predecir una lista de películas.
+
+## 1) Dividir en dataset en entrenamiento y test
+
+Dado que contamos con 100 usuarios, tomaremos los 75 primeros para entrenar, y los 25 restantes para testear.
+
+```{r}
+train <- MovieLenseSmall[1:75, ]
+test <- MovieLenseSmall[76:100, ]
+
+train
+test
+```
+
+## 2) Aplicar un algoritmo de recomendación
+
+-   Los algoritmos de recomendación se almacenan en un objeto de registro llamado `recommenderRegistry`
+
+```{r, eval = FALSE}
+recommenderRegistry$get_entries(dataType = "realRatingMatrix")
+```
+
+-   Aplicaremos el recomendador basado en el filtrado colaborativo de usuarios, **UBCF** con los parámetros por defecto del modelo.
+
+```{r}
+rec_ubcf <- Recommender(train, method = "UBCF")
+rec_ubcf
+```
+
+## 3) Generar nuevas recomendaciones
+
+-   Vamos a crear recomendaciones para el usuario 76 (no visto por el algoritmo anteriormente)
+
+-   Para crear nuevas recomendaciones utilizamos la función `predict` a la que pasaremos el modelo previamente creado de clase *Recommender* y el usuario al cual queremos recomendar
+
+```{r}
+pred <- predict(rec_ubcf, MovieLenseSmall[76], type = "ratings")
+pred
+```
+
+## 
+
+```{r}
+library(knitr)
+as(pred, "data.frame") |>
+  arrange(-rating) |>
+  kable()
+```
+
+## 
+
+-   Se pueden generar recomendaciones para varios usuarios al mismo tiempo, pero tengamos en cuenta que la función `predict` tiene como límite 10 usuarios.
+
+-   También se puede obtener directamente un top-N de reocmendaciones en forma de lista, obviando las valoraciones estimadas.
+
+```{r}
+pred_top_n <- predict(rec_ubcf, MovieLenseSmall[76], n = 5)
+pred_top_n
+```
+
+## 
+
+```{r}
+as(pred_top_n, "list") |>
+  kable(col.names = c("Top 5 películas"))
+```
+
+## 
+
+Podríamos aplicar otro algoritmo de recomendación y compararlo.
+
+```{r}
+rec_popular <- Recommender(train, method = "POPULAR")
+rec_popular
+```
+
+```{r}
+pred_top_n <- predict(rec_popular, MovieLenseSmall[76], n = 5)
+pred_top_n
+```
+
+## 
+
+```{r}
+as(pred_top_n, "list") |>
+  kable(col.names = c("Top 5 películas"))
+```
+
+# Ejemplo avanzado. {background-color="#4758ab"}
+
+El ejemplo anterior nos ha servido como caso inicial como primera toma de contacto con la librería. Sin embargo, existen funciones más avanzadas que nos permitirán llegar a realizar un ejemplo más completo y evaluar el modelo de recomendación o comparar algoritmos de recomendación entre sí.
+
+## 1) Generar un esquema de evaluación
+
+```{r}
+set.seed(1)
+evaluationScheme(MovieLense, # Conjunto de datos como `ratingMatrix`
+                 method = 'split', # Método de splitting
+                 train = 0.75, # Fracción de entrenamiento
+                 given = 10,# Número único de elementos dados para la evaluación
+                 goodRating = 4 # Umbral para dar calificaciones como buenas
+                 ) -> MovieLense_esquema
+MovieLense_esquema
+```
+
+## 2) Aplicar un algoritmo de recomendación
+
+-   Definir los parámetros del modelo
+
+```{r}
+list(method = "cosine", # Métrica de similaridad
+     nn = 25 # Tamaño del conjunto de usuarios más cercanos
+     ) -> model_params
+```
+
+-   Aplicar el modelo
+
+```{r}
+Recommender(
+  getData(MovieLense_esquema, "train"), # Matriz de entrenamiento
+            method = "UBCF", # Método de recomendación
+            parameter = model_params # Parámetros del algoritmo de recomendación
+  ) -> rec_UBCF_avanzado
+rec_UBCF_avanzado
+```
+
+## 3) Generar nuevas recomendaciones
+
+-   La función `predict` permite generar nuevas recomendaciones utilizando un modelo de recomendación y datos sobre nuevos usuarios
+
+-   De entrada, se utiliza la parte de los datos de test conocida (oculta para el algoritmo)
+
+```{r}
+predict(rec_UBCF_avanzado, # Modelo de recomendación de clase Recommender
+        getData(MovieLense_esquema, "known"), # Datos de usuarios test
+        type = "ratings" # Tipo de recomendación: topNList, ratings, ratingsMatrix
+        ) -> pred_UBCF_avanzado
+pred_UBCF_avanzado
+```
+
+## 4) Evaluar la precisión de la predicción
+
+-   La función `calcPredictionAccuracy` permite evaluar el error de predicción
+
+-   Se puede dar por usuario o en global
+
+-   Para el cálculo de las métricas se utilizan las datos de test desconocidos
+
+```{r}
+calcPredictionAccuracy(pred_UBCF_avanzado, 
+                       getData(MovieLense_esquema, "unknown"), 
+                       byUser = TRUE) -> error_UBCF_avanzado
+head(error_UBCF_avanzado, 3) # Error de los 3 primeros usuarios
+```
+
+## 5) Evaluar el agoritmo para el top-N
+
+-   La función `evaluate` nos permite un algoritmo para diferentes top-N elementos
+
+-   Generamos listas top-N de diferente número de recomendaciones, por ejemplo, 1, 3, 7, 10, 15, 20.
+
+```{r}
+evaluate(MovieLense_esquema, method = "UBCF", type = "topNList", 
+          n = c(1, 3, 7, 10, 15, 20)) -> eval_UBCF
+getConfusionMatrix(eval_UBCF)
+plot(eval_UBCF, annotate=TRUE) # Curva ROC
+plot(eval_UBCF, "prec/rec", annotate=TRUE)
+```
+
+## 6) Comparación de algoritmos
+
+-   En los sistemas de recomendación es necesario a veces probar con diferentes modelos y elegir el de mejor resultado
+
+-   La función `evaluate` también nos permite evaluar varios algoritmos al mismo tiempo
+
+## 
+
+```{r}
+algoritmos <- list(
+    `random items` = list(name = "RANDOM", param = NULL), 
+    `popular items` = list(name = "POPULAR", param = NULL), 
+    `user-based CF` = list(name = "UBCF", param = list(nn = 3)), 
+    `item-based CF` = list(name = "IBCF", param = list(k = 100)))
+
+evaluate(MovieLense_esquema, algoritmos, type = "topNList", 
+         n = c(1, 3, 7, 10, 15, 20)) -> eval_varios
+```
+
+```{r}
+#| output-location: slide
+plot(eval_varios, annotate = 2, legend = "topleft")
+```
+
+## Conclusiones
+
+-   El peor modelo es el aleatorio, seguido por el filtro colaborativo basado en ítems.
+-   El mejor modelo es el popular, distando en mayor medida del siguiente mejor modelo, UBCF
+-   Para listas top-1, el **IBCF** es ligeramente mejor que **UBCF**
+-   Para lista top-n, con $n>1$, **UBCF** funciona mejor que **IBCF**
+
+## Ejercicios {background-color="#4758ab"}
+
+### Ejercicio 3. Aplica sobre el conjunto de datos `MovieLense` el algoritmo IBCF y compara el resultado con el UBCF. Compara ambos modelos a través de las métricas de evaluación vistas. Por ejemplo, utiliza la curva ROC para comparalos.
+
+## Bibliografía
+
+-   [Manual de Recommenderlab](https://cran.r-project.org/web/packages/recommenderlab/recommenderlab.pdf)
+
+-   [Building a Recommender Sytem with R](http://ndl.ethernet.edu.et/bitstream/123456789/27975/1/24.pdf)
+
+-   [Tutorial con Recommenderlab](https://github.com/BrandonHoeft/Recommender-System-R-Tutorial/blob/master/RecommenderLab_Tutorial.md)

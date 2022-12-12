@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.title, .author, .date {
+  color: #fff !important;
+  font-family: 'Bebas Neue' !important;
+}
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4,  .reveal h5, .reveal h6 {
+    font-family: 'Bebas Neue' !important;
+    font-weight: normal;
+}
+
+/*-- scss:defaults --*/
+
+$body-bg: #000;
+$body-color: #fff;
+$link-color: #42affa;

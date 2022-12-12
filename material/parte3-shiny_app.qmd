@@ -1,0 +1,362 @@
+---
+format: 
+  revealjs:
+    theme: simple
+    css: "css/custom.css"
+    slide-number: c/t
+    logo: "img/logo_elarte.jpeg"
+    footer: "https://elartedeldato.com"
+    echo: true
+    cache: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+
+# Parte 3. Construyendo Netflix con {shiny} {background-color="#000"}
+
+Paula López Casado - 21-12-2022
+
+## En esta sessión veremos...
+
+Cómo construir una app como de recomendación en R!
+
+![](img/shiny.png)
+Esta app consta de varias filas con películas recomendadas. Cada fila está generada por las recomendaciones de un algoritmo dierente. Los algoritmos que utilizaremos son: UBCF, IBCF, POPULAR y RANDOM. Además, la app incluye un texto con la valoración estimada personalizada para cada usuario.
+
+## Sobre Shiny
+
+Shiny es una librería de R que permite crear aplicaciones web interactivas.
+
+Si nunca has utilizado shiny antes, puedes empezar por [este tutorial de introducción](https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/).
+
+## Crear el achivo app.R
+
+En primer lugar, generamos un script de R con el nombre `app.R` con las funciones principales `ui` y `server`.
+
+```{r, eval = F}
+library(shiny)
+
+ui <- shiny::fluidPage(
+  
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+- `ui` será la función que defina la interfaz de usuario.
+- `server` quedará vacío ya que en este caso no vamos a interactuar con la app :(
+
+# Tu turno {background-color="#4758ab"}
+
+Prueba a ejecutar la app. 
+
+_Simplemente aparecerá una pantalla en blanco..._
+
+## Añade las librerías necesarias
+
+Además de `shiny`, también necesitarás otras librerías. Cárgalas al principio del script `app.R`.
+
+```{r, eval = F}
+# Librerías
+library(glue) # Permite pegar strings
+library(bslib) # Sirve para algunas componentes de diseño
+library(recommenderlab) # Librería de recomendación
+library(dplyr) # Manipulación de datos
+
+ui <- shiny::fluidPage(
+  
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+## `utils_cards.R`
+
+En un nuevo script, escribiremos las funciones que nos permiten crear las _cards_ o tarjetas de cada película. 
+
+Este script se llamará `utils_cards.R` y lo guardaremos en una carpeta aparte con el resto de scripts de R.
+
+_Ojo! Todos menos el principal, app.R_
+
+Por el momento, contendrá una función llamada `bs_card()`.
+
+##
+
+```{r, eval = T}
+bs_card <- function(titulo, img, norm_rating) {
+  shiny::div(
+    class="card mb-3 col-sm-4",
+    shiny::img(src = img,
+               class = "card-img-top"),
+    shiny::div(
+      class="card-body",
+      shiny::h5(
+        class="card-title", 
+        titulo
+      ),
+      shiny::p(
+        class="card-text", 
+        glue::glue(norm_rating, "% recomendado para ti")
+      ),
+      shiny::a(
+        href = "", 
+        class = "btn btn-primary", 
+        "Ver película"
+        )
+    )
+    )
+}
+```
+
+# Tu turno {background-color="#4758ab"}
+
+Prueba a ejecutar la función `bs_card()` con un título, img y un rating de recomendación _fake_.
+
+```{r, eval = FALSE}
+bs_card(titulo = "El Grinch", 
+        img = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTkf7_D2BahI8W0on5_l2qo1k451hdfV3Mc1mjSgp6SQQJiCvIN", 
+        norm_rating = 85)
+```
+
+```
+<div class="card mb-3 col-sm-4">
+  <img src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTkf7_D2BahI8W0on5_l2qo1k451hdfV3Mc1mjSgp6SQQJiCvIN" class="card-img-top"/>
+  <div class="card-body">
+    <h5 class="card-title">El Grinch</h5>
+    <p class="card-text">85% recomendado para ti</p>
+    <a href="" class="btn btn-primary">Ver película</a>
+  </div>
+</div>
+```
+
+
+## Construyendo la Interfaz de Usuario o UI
+
+Para construir la interfaz de usuario, necesitamos:
+
+- Crear un archivo `custom.css` 
+- Definir el tema con `bslib` basado en Boostrap 5
+- Generar la barra de navegación principal con `navbarPage` 
+- Generar las filas de cards que contendrán las películas recomendadas basadas en 4 algoritmos diferentes 
+
+## `ui()`
+
+```{r, eval = F}
+ui <- shiny::fluidPage(
+  
+  includeCSS("custom.css"),
+  
+  theme = bslib::bs_theme(
+    version = 5, # Boostrap 5
+    bg = "#000000", # Background oscuro
+    fg = "#FFFFFF",
+    primary = "#e50914", # Rojo de Netflix como color principal
+    base_font = "'Helvetica Neue', 'Segoe UI', Roboto, Ubuntu, sans-serif" # Fuente de Netflix
+    ), 
+  
+  navbarPage("NETFLIX",
+             tabPanel("Home"),
+             tabPanel("Series"),
+             tabPanel("Películas")
+  ),
+  
+  shiny::div(class="container px-4 px-lg-5",
+    shiny::h2("Porque a otros como tú le han gustado"),
+    shiny::div(class="container-fluid py-2 overflow-scroll",
+      shiny::div(class="d-flex flex-row flex-nowrap", 
+        generar_reco_cards(df_ubcf)
+      )
+    )
+  ),
+  
+  shiny::div(class="container px-4 px-lg-5",
+    shiny::h2("Porque has visto películas parecidas"),
+    shiny::div(class="container-fluid py-2 overflow-scroll",
+      shiny::div(class="d-flex flex-row flex-nowrap", 
+        generar_reco_cards(df_ibcf)
+      )
+    )
+  ),
+  
+  shiny::div(class="container px-4 px-lg-5",
+    shiny::h2("Las películas más populares"),
+    shiny::div(class="container-fluid py-2 overflow-scroll",
+      shiny::div(class="d-flex flex-row flex-nowrap", 
+        generar_reco_cards(df_popular)
+      )
+   )
+  ),
+  
+  shiny::div(class="container px-4 px-lg-5",
+    shiny::h2("Descubre otras películas"),
+    shiny::div(class="container-fluid py-2 overflow-scroll",
+      shiny::div(class="d-flex flex-row flex-nowrap", 
+        generar_reco_cards(df_random)
+        )
+    )
+  )
+)
+```
+
+## Función para generar las listas de Recomendación
+
+Añadir la función `generar_reco_cards()` a `utils.R`
+
+```{r}
+generar_reco_cards <- function(df_reco, df_peliculas) {
+
+  reco_cards <- htmltools::tagList() # generamos lista vacía de tags de HTML
+  
+  for (i in 1:10){
+    reco_cards[[i]] <- bs_card(titulo = df_reco$item[i], 
+                               img = df_peliculas[df_peliculas$titulo == df_reco$item[i], "img_url"],
+                               norm_rating = df_reco$norm_rating[i])
+  }
+  return(reco_cards)
+}
+```
+
+- Carga al principio de la app el script de funciones con `source("R/utils.R")`.
+
+## `custom.css`
+
+Crearemos un nuevo archivo `custom.css` que contendrá algunos elementos de estilo de la app que imitan a la app original de Netflix.
+
+```{css, eval = FALSE}
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+  word-wrap: break-word;
+  border: 0;
+  border-radius: 0rem;
+  overflow: hidden;
+  box-shadow: 2px 4px 12px rgba(0,0,0,.08);
+  transition: all .3s cubic-bezier(0,0,.5,1);
+
+}
+
+.card:hover {
+  transform: scale(1.1);
+}
+
+.card-img, .card-img-top, .card-img-bottom {
+    width: 70%;
+    object-fit: cover;
+}
+
+.card p {
+  color: #58c24f;
+  font-weight: bold;
+}
+
+.navbar.navbar-default {
+  background-color: transparent !important;
+}
+
+.navbar.navbar-default .navbar-brand {
+  color: #e50914;
+  font-weight: 500;
+  font-family: "Bebas Neue";
+  letter-spacing: 2px;
+  font-size: 40px;
+}
+
+.navbar-light .navbar-nav .nav-link, .navbar-light .navbar-nav .nav-tabs>li>a, .navbar-light .navbar-nav .nav-pills>li>a, .navbar.navbar-default .navbar-nav .nav-link, .navbar.navbar-default .navbar-nav .nav-tabs>li>a, .navbar.navbar-default .navbar-nav .nav-pills>li>a, .navbar-light ul.nav.navbar-nav>li>a, .navbar.navbar-default ul.nav.navbar-nav>li>a {
+  color: #fff;
+  font-family: "Helvetica Neue";
+}
+```
+
+# Tu turno {background-color="#4758ab"}
+
+Añade los siguientes dataframes _dummy_ antes de la función `ui()` y ejecuta de nuevo la app. 
+
+::: columns
+::: {.column width="50%"}
+
+```{r, eval = F}
+# Datos
+df_ubcf <- 
+  df_ibcf <- 
+  df_popular <- 
+  df_random <- data.frame(item = rep("El Grinch", 10), norm_rating = round(runif(10, 0,100),0))
+
+df_peliculas <- data.frame(titulo = "El Grinch", img_url = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTkf7_D2BahI8W0on5_l2qo1k451hdfV3Mc1mjSgp6SQQJiCvIN")
+```
+
+:::
+::: {.column width="50%"}
+![](img/building_app1.png)
+:::
+:::
+
+## Crear las funciones de recomendación
+
+En `utils.R` generaremos las funciones `recomendar_pelicula()` y `normalizar_rating()`.
+
+```{r}
+recomendar_pelicula <- function(train_data, user_data, algoritmo, params, excluir) {
+  Recommender(train_data, algoritmo, params) %>% # Generar modelo
+    predict(user_data, type = "ratings") %>%  # Recomendar al usuario
+    as("data.frame") %>% # Convertir la matriz a dataframe
+    arrange(desc(rating)) %>% # Ordenar de forma descendente por rating
+    filter(!item %in% excluir) %>% # Excluir películas ya recomendadas
+    head(10) %>% # Filtrar el top 10 de películas
+    mutate(norm_rating = round(normalizar_rating(rating),0)) # Normalizar ratings
+}
+
+normalizar_rating <- function(rating) {
+  norm_rating <- (rating - 1) / 4 * 100
+  ifelse(norm_rating > 100, 100, norm_rating)
+}
+```
+
+## Generar las listas de recomendación
+
+En el archivo principal `app.R` generaremos las listas de recomendación para cada modelo a partir de los datos de entrada `MovieLense`. 
+
+Cada lista será un dataframe de R con las columnas `user`, `item`, `rating` y `norm_rating`.
+
+##
+
+```{r, eval = F}
+# Datos
+data("MovieLense")
+MovieLenseSmall <- MovieLense[1:100, colCounts(MovieLense) > 250]
+df_peliculas <- read.csv("peliculas.csv") # csv con los títulos y url de las caráctulas de las películas
+train_data <- MovieLenseSmall[1:75, ]
+user_data <- MovieLenseSmall[76]
+
+# Dataframes de reocmendación
+df_ubcf <- recomendar_pelicula(train_data, user_data, "UBCF", list(nn = 3), NULL)
+df_ibcf <- recomendar_pelicula(train_data, user_data, "IBCF", list(k = 100), 
+                               df_ubcf$item)
+df_popular <- recomendar_pelicula(train_data, user_data, "POPULAR", NULL, 
+                                  c(df_ubcf$item, df_ibcf$item))
+df_random <- recomendar_pelicula(train_data, user_data, "RANDOM",  NULL, 
+                                 c(df_ubcf$item, df_ibcf$item, df_popular$item))
+```
+
+# Tu turno {background-color="#4758ab"}
+
+Ejecuta de nuevo la app y listo! 
+![](img/listo.jpeg)
+
+## {background-image=img/shiny.png}
+
+
