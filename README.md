@@ -19,7 +19,7 @@ Tras esta clase aprenderás...
 ```{r pkg-list}
 #| eval: false
 pkg_list <- c(
-  "tidyverse", "shiny", "recommenderlab", "reactable", "rmarkdown", "glue", "bslib"
+  "tidyverse", "shiny", "htmltools", "reshape2", "recommenderlab", "reactable", "rmarkdown", "glue", "bslib"
   )
 install.packages(pkg_list)
 ```

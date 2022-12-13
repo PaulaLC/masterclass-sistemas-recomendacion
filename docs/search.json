@@ -11,7 +11,7 @@
     "href": "index.html#para-esta-clase-necesitarás",
     "title": "Masterclass - Introducción a los Sistemas de Recomendación",
     "section": "Para esta clase necesitarás…",
-    "text": "Para esta clase necesitarás…\n\nInstalar algunas librerías de R, como tidyverse, shiny o recommenderlab.\n\n\npkg_list <- c(\n  \"tidyverse\", \"shiny\", \"recommenderlab\", \"reactable\", \"rmarkdown\", \"glue\", \"bslib\"\n  )\ninstall.packages(pkg_list)\n\n\nLa última versión de R (R 3.3.0+) y RStudio(2022.07.2+576). Sigue los pasos aquí"
+    "text": "Para esta clase necesitarás…\n\nInstalar algunas librerías de R, como tidyverse, shiny o recommenderlab.\n\n\npkg_list <- c(\n  \"tidyverse\", \"shiny\", \"htmltools\", \"reshape2\", \"recommenderlab\", \"reactable\", \"rmarkdown\", \"glue\", \"bslib\"\n  )\ninstall.packages(pkg_list)\n\n\nLa última versión de R (R 3.3.0+) y RStudio(2022.07.2+576). Sigue los pasos aquí"
   },
   {
     "objectID": "index.html#programación",
